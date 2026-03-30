@@ -1,0 +1,75 @@
+{
+  "name": "ExecutiveMeditator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-native-community/netinfo": "^11.3.2",
+    "@react-navigation/bottom-tabs": "^6.5.20",
+    "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native-stack": "^6.9.26",
+    "@reduxjs/toolkit": "^2.2.3",
+    "@supabase/supabase-js": "^2.43.0",
+    "lottie-react-native": "^6.7.0",
+    "react": "18.2.0",
+    "react-native": "0.74.1",
+    "react-native-onesignal": "4.5.1",
+    "react-native-reanimated": "^3.6.3",
+    "react-native-safe-area-context": "^4.10.1",
+    "react-native-screens": "^3.31.1",
+    "react-native-svg": "^15.15.4",
+    "react-native-url-polyfill": "^2.0.0",
+    "react-native-vector-icons": "^10.1.0",
+    "react-redux": "^9.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/runtime": "^7.20.0",
+    "@react-native/babel-preset": "^0.74.83",
+    "@react-native/eslint-config": "^0.74.83",
+    "@react-native/metro-config": "^0.74.83",
+    "@react-native/typescript-config": "^0.74.83",
+    "@testing-library/react-native": "^12.4.3",
+    "@types/react": "^18.2.6",
+    "@types/react-native-vector-icons": "^6.4.18",
+    "@types/react-test-renderer": "^18.0.0",
+    "babel-jest": "^29.6.3",
+    "babel-plugin-module-resolver": "^5.0.3",
+    "eslint": "^8.19.0",
+    "jest": "^29.6.3",
+    "react-test-renderer": "18.2.0",
+    "typescript": "5.0.4"
+  },
+  "jest": {
+    "preset": "react-native",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-onesignal|lottie-react-native|react-native-reanimated|react-native-vector-icons|react-native-url-polyfill)/)"
+    ],
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "moduleNameMapper": {
+      "\\.(lottie)$": "<rootDir>/__mocks__/fileMock.js",
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

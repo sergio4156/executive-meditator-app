@@ -1,0 +1,6 @@
+module Pods_ExecutiveMeditator {
+  umbrella header "Pods-ExecutiveMeditator-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,6 @@
+module Pods_ExecutiveMeditator_ExecutiveMeditatorTests {
+  umbrella header "Pods-ExecutiveMeditator-ExecutiveMeditatorTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
