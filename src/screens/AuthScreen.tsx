@@ -37,9 +37,16 @@ export function AuthScreen() {
       if (mode === 'signin') {
         await signIn(email.trim(), password);
       } else {
-        await signUp(email.trim(), password);
+        const result = await signUp(email.trim(), password);
+        if (!result.session) {
+          Alert.alert(
+            'Check Your Email',
+            'We sent you a confirmation link. Click it then come back and sign in.',
+            [{text: 'OK', onPress: () => setMode('signin')}],
+          );
+          return;
+        }
       }
-      // Navigation happens automatically via AppNavigator's onAuthStateChanged
     } catch (err: any) {
       Alert.alert('Error', err.message ?? 'Authentication failed.');
     } finally {
