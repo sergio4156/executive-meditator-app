@@ -20,16 +20,9 @@ import type {AppNotification} from '@/store/slices/notificationSlice';
 const TYPE_ICONS: Record<AppNotification['type'], string> = {
   meditation_reminder: '☯',
   alarm: '⚠️',
-  badge: '🏅',
   general: '💬',
 };
 
-const ALARM_COLORS: Record<string, string> = {
-  subtle: theme.colors.alarmSubtle,
-  mild: theme.colors.alarmMild,
-  disease: theme.colors.alarmDisease,
-  critical: theme.colors.alarmCritical,
-};
 
 function NotificationItem({notification}: {notification: AppNotification}) {
   const dispatch = useAppDispatch();
@@ -48,7 +41,7 @@ function NotificationItem({notification}: {notification: AppNotification}) {
       <Card
         style={[
           styles.notifCard,
-          !notification.read && styles.notifCardUnread,
+          ...(notification.read ? [] : [styles.notifCardUnread]),
           {borderLeftColor: borderColor},
         ]}>
         <Text style={styles.notifIcon}>

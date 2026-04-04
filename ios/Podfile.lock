@@ -1206,7 +1206,7 @@ PODS:
     - React-utils (= 0.74.1)
   - RNCAsyncStorage (1.24.0):
     - React-Core
-  - RNReanimated (3.6.3):
+  - RNReanimated (3.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1249,7 +1249,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSVG (15.15.4):
+  - RNSVG (15.6.0):
     - React-Core
   - RNVectorIcons (10.3.0):
     - DoubleConversion
@@ -1538,9 +1538,9 @@ SPEC CHECKSUMS:
   React-utils: 67574b07bff4429fd6c4d43a7fad8254d814ee20
   ReactCommon: 64c64f4ae1f2debe3fab1800e00cb8466a4477b7
   RNCAsyncStorage: b6410dead2732b5c72a7fdb1ecb5651bbcf4674b
-  RNReanimated: 484e70bb9009952433bd52abc083ebe418d35277
+  RNReanimated: def444e044c354f38bb0a5926a8583ba19d944c1
   RNScreens: ef68e50aea531dd00c592ba4683bbcb89d4d2e1a
-  RNSVG: 96f8cbf58be5d2a538f3a58c92985c2b733e6adf
+  RNSVG: e477db5aefe921957a4bcccf755a906f49a4c022
   RNVectorIcons: 1b7e9f6a06b5572f3b4e313320b5e566def26c7f
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 348f8b538c3ed4423eb58a8e5730feec50bce372

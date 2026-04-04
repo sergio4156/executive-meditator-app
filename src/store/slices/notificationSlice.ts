@@ -1,13 +1,10 @@
-/**
- * Notification Slice — tracks FCM permission state and in-app notification list.
- */
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 
 export interface AppNotification {
   id: string;
   title: string;
   body: string;
-  type: 'meditation_reminder' | 'alarm' | 'badge' | 'general';
+  type: 'meditation_reminder' | 'alarm' | 'general';
   receivedAt: number;
   read: boolean;
 }
@@ -18,8 +15,8 @@ interface NotificationState {
   notifications: AppNotification[];
   unreadCount: number;
   onboardingComplete: boolean;
-  awakeStart: number; // hour 0-23, default 7
-  awakeEnd: number;   // hour 0-23, default 22
+  awakeStart: number;
+  awakeEnd: number;
 }
 
 const initialState: NotificationState = {

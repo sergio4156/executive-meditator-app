@@ -1,5 +1,5 @@
 /**
- * SettingsScreen — User preferences and account management.
+ * SettingsScreen — Schedule configuration and account management.
  */
 import React, {useState} from 'react';
 import {
@@ -7,13 +7,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Switch,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {useAppDispatch, useAppSelector} from '@/store';
 import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {completeOnboarding, resetOnboarding} from '@/store/slices/notificationSlice';
@@ -21,28 +20,6 @@ import {signOut} from '@/services/supabase/auth';
 import {Card} from '@/components/Card';
 import {theme} from '@/theme';
 import {WEEK_CONFIG} from '@/utils/meditation';
-
-function SettingRow({
-  label,
-  description,
-  children,
-}: {
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.settingRow}>
-      <View style={styles.settingText}>
-        <Text style={styles.settingLabel}>{label}</Text>
-        {description && (
-          <Text style={styles.settingDescription}>{description}</Text>
-        )}
-      </View>
-      {children}
-    </View>
-  );
-}
 
 function fmtHour(h: number) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -54,14 +31,12 @@ export function SettingsScreen() {
   const dispatch = useAppDispatch();
   const {user} = useAppSelector(s => s.auth);
   const {currentWeek} = useAppSelector(s => s.meditation);
-  const {fcmPermissionGranted, awakeStart, awakeEnd} = useAppSelector(s => s.notifications);
+  const {fcmPermissionGranted, awakeStart, awakeEnd} = useAppSelector(
+    s => s.notifications,
+  );
 
   const [localAwakeStart, setLocalAwakeStart] = useState(awakeStart);
   const [localAwakeEnd, setLocalAwakeEnd] = useState(awakeEnd);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
-  const [wearableEnabled, setWearableEnabled] = useState(false);
-  const [gamificationEnabled, setGamificationEnabled] = useState(true);
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -92,7 +67,7 @@ export function SettingsScreen() {
             </Text>
             {user?.isAnonymous && (
               <Text style={styles.accountHint}>
-                Upgrade to keep your progress across devices.
+                Sign up to keep your settings across devices.
               </Text>
             )}
           </View>
@@ -106,7 +81,7 @@ export function SettingsScreen() {
 
         {/* Program week */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Current Program Week</Text>
+          <Text style={styles.sectionTitle}>Program Week</Text>
           <Text style={styles.sectionSubtitle}>
             {WEEK_CONFIG[currentWeek].description}
           </Text>
@@ -201,74 +176,37 @@ export function SettingsScreen() {
         {/* Notifications */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Notifications</Text>
-          <SettingRow
-            label="Push Notifications"
-            description={
-              fcmPermissionGranted
-                ? 'Enabled — you will receive reminders and alarms'
-                : 'Disabled — enable in device Settings'
-            }>
-            <Text style={{color: fcmPermissionGranted ? theme.colors.success : theme.colors.error}}>
+          <View style={styles.notifRow}>
+            <Text style={styles.notifLabel}>Push Notifications</Text>
+            <Text
+              style={{
+                color: fcmPermissionGranted
+                  ? theme.colors.success
+                  : theme.colors.error,
+                fontWeight: theme.typography.fontWeight.semibold,
+              }}>
               {fcmPermissionGranted ? '✓ On' : '✗ Off'}
             </Text>
-          </SettingRow>
-          <View style={styles.divider} />
-          <SettingRow label="Sound" description="Play a gentle chime">
-            <Switch
-              value={soundEnabled}
-              onValueChange={setSoundEnabled}
-              trackColor={{false: theme.colors.border, true: theme.colors.primary}}
-              thumbColor={theme.colors.white}
-            />
-          </SettingRow>
-          <View style={styles.divider} />
-          <SettingRow label="Vibration">
-            <Switch
-              value={vibrationEnabled}
-              onValueChange={setVibrationEnabled}
-              trackColor={{false: theme.colors.border, true: theme.colors.primary}}
-              thumbColor={theme.colors.white}
-            />
-          </SettingRow>
+          </View>
+          {!fcmPermissionGranted && (
+            <Text style={styles.notifHint}>
+              Enable in your device Settings → Notifications → Executive Meditator
+            </Text>
+          )}
+          <Text style={styles.notifNote}>
+            Reminders use vibration only — no sound.
+          </Text>
         </Card>
 
-        {/* Optional features */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Features</Text>
-          <SettingRow
-            label="Gamification"
-            description="Streaks, badges, and points">
-            <Switch
-              value={gamificationEnabled}
-              onValueChange={setGamificationEnabled}
-              trackColor={{false: theme.colors.border, true: theme.colors.primary}}
-              thumbColor={theme.colors.white}
-            />
-          </SettingRow>
-          <View style={styles.divider} />
-          <SettingRow
-            label="Wearable Integration"
-            description="Apple Watch / Google Fit (coming soon)">
-            <Switch
-              value={wearableEnabled}
-              onValueChange={setWearableEnabled}
-              trackColor={{false: theme.colors.border, true: theme.colors.primary}}
-              thumbColor={theme.colors.white}
-              disabled
-            />
-          </SettingRow>
-        </Card>
-
-        {/* App info */}
+        {/* About */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
           <Text style={styles.aboutText}>The Executive Meditator v1.0.0</Text>
           <Text style={styles.aboutText}>
-            A guided micro-meditation program designed for peak performers.
+            A passive micro-meditation program designed for peak performers.
           </Text>
         </Card>
 
-        {/* DEV ONLY — reset onboarding so it shows again on next sign-in */}
         {__DEV__ && (
           <TouchableOpacity
             style={styles.devButton}
@@ -280,7 +218,6 @@ export function SettingsScreen() {
             <Text style={styles.devButtonText}>⚙ DEV: Reset Onboarding</Text>
           </TouchableOpacity>
         )}
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -340,47 +277,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 2,
   },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-  },
-  settingText: {flex: 1, marginRight: theme.spacing.md},
-  settingLabel: {
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.textPrimary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  settingDescription: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.textMuted,
-    marginTop: 2,
-  },
-  divider: {height: 1, backgroundColor: theme.colors.divider},
-  aboutText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.textSecondary,
-  },
-  signOutButton: {
-    backgroundColor: theme.colors.error + '22',
-    borderWidth: 1,
-    borderColor: theme.colors.error,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.md,
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
-  },
-  signOutText: {
-    color: theme.colors.error,
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-  },
-  awakeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.sm,
-  },
+  awakeRow: {flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm},
   awakePicker: {flex: 1, alignItems: 'center', gap: theme.spacing.xs},
   awakeLabel: {
     fontSize: theme.typography.fontSize.sm,
@@ -416,6 +313,40 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.divider,
     marginHorizontal: theme.spacing.sm,
   },
+  notifRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notifLabel: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  notifHint: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    fontStyle: 'italic',
+  },
+  notifNote: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+  },
+  aboutText: {fontSize: theme.typography.fontSize.sm, color: theme.colors.textSecondary},
+  signOutButton: {
+    backgroundColor: theme.colors.error + '22',
+    borderWidth: 1,
+    borderColor: theme.colors.error,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  signOutText: {
+    color: theme.colors.error,
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
   devButton: {
     borderWidth: 1,
     borderColor: theme.colors.textMuted,
@@ -424,8 +355,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     opacity: 0.6,
   },
-  devButtonText: {
-    color: theme.colors.textMuted,
-    fontSize: theme.typography.fontSize.sm,
-  },
+  devButtonText: {color: theme.colors.textMuted, fontSize: theme.typography.fontSize.sm},
 });

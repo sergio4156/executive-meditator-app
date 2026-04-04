@@ -1,179 +1,113 @@
 /**
- * DashboardScreen — Progress & accumulation tracking.
- *
- * Shows:
- *  - Weekly progress ring / bar
- *  - Daily completion rate
- *  - Streak counter
- *  - Badge showcase
- *  - Session history list
+ * DashboardScreen — Schedule overview.
  */
-import React, {useEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import React from 'react';
+import {View, Text, StyleSheet, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {useAppSelector} from '@/store';
-import {useDatabase} from '@/hooks/useDatabase';
 import {Card} from '@/components/Card';
-import {ProgressBar} from '@/components/ProgressBar';
-import {BadgeDisplay} from '@/components/BadgeDisplay';
 import {theme} from '@/theme';
-import {BADGES, WEEK_CONFIG} from '@/utils/meditation';
-import type {MeditationSession} from '@/store/slices/meditationSlice';
+import {WEEK_CONFIG} from '@/utils/meditation';
 
-// ---- helpers ----
-
-function formatDate(ms: number): string {
-  return new Date(ms).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function fmtHour(h: number) {
+  const period = h < 12 ? 'AM' : 'PM';
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display}:00 ${period}`;
 }
 
-function SessionRow({session}: {session: MeditationSession}) {
-  return (
-    <View style={styles.sessionRow}>
-      <View style={styles.sessionLeft}>
-        <Text style={styles.sessionIcon}>{session.skipped ? '⏭️' : '✅'}</Text>
-        <View>
-          <Text style={styles.sessionDate}>{formatDate(session.startedAt)}</Text>
-          <Text style={styles.sessionDetail}>
-            Week {session.week} · {session.durationSeconds}s
-            {session.skipped ? ' · skipped' : ''}
-          </Text>
-        </View>
-      </View>
-      <Text style={styles.sessionPoints}>
-        +{session.pointsEarned} pts
-      </Text>
-    </View>
-  );
+function nextReminderTime(
+  intervalMinutes: number,
+  awakeStart: number,
+  awakeEnd: number,
+): string {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+
+  if (h < awakeStart || h >= awakeEnd) {
+    return `${fmtHour(awakeStart)} tomorrow`;
+  }
+
+  const minutesElapsed = (h - awakeStart) * 60 + m;
+  const minutesToNext =
+    intervalMinutes - (minutesElapsed % intervalMinutes);
+  const nextH = Math.floor((h * 60 + m + minutesToNext) / 60);
+  const nextM = (h * 60 + m + minutesToNext) % 60;
+  const period = nextH < 12 ? 'AM' : 'PM';
+  const display = nextH % 12 === 0 ? 12 : nextH % 12;
+  return `${display}:${String(nextM).padStart(2, '0')} ${period}`;
 }
 
 export function DashboardScreen() {
-  const {stats, history, historyLoading, currentWeek} = useAppSelector(
-    s => s.meditation,
+  const {currentWeek} = useAppSelector(s => s.meditation);
+  const {awakeStart, awakeEnd, fcmPermissionGranted} = useAppSelector(
+    s => s.notifications,
   );
-  const {loadHistory} = useDatabase();
-
-  useEffect(() => {
-    loadHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const weekConfig = WEEK_CONFIG[currentWeek];
-  // Expected sessions per day for current week
-  const expectedPerDay = Math.floor((24 * 60) / weekConfig.intervalMinutes);
-  const todayRate = Math.min(1, stats.completedToday / expectedPerDay);
+  const nextReminder = nextReminderTime(
+    weekConfig.intervalMinutes,
+    awakeStart,
+    awakeEnd,
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Your Progress</Text>
+        <Text style={styles.title}>Schedule</Text>
 
-        {/* Oneness milestone */}
-        {stats.onenessReached && (
-          <Card style={styles.onenessBanner}>
-            <Text style={styles.onenessTitle}>✨ Oneness Achieved ✨</Text>
-            <Text style={styles.onenessSubtitle}>
-              You have reached the irreversible experience of Oneness.
-            </Text>
-          </Card>
-        )}
-
-        {/* Summary cards */}
-        <View style={styles.summaryRow}>
-          <Card style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{stats.totalSessions}</Text>
-            <Text style={styles.summaryLabel}>Total Sessions</Text>
-          </Card>
-          <Card style={styles.summaryCard}>
-            <Text style={[styles.summaryValue, {color: theme.colors.gold}]}>
-              {stats.streak}
-            </Text>
-            <Text style={styles.summaryLabel}>Day Streak 🔥</Text>
-          </Card>
-          <Card style={styles.summaryCard}>
-            <Text style={[styles.summaryValue, {color: theme.colors.secondary}]}>
-              {stats.totalPoints}
-            </Text>
-            <Text style={styles.summaryLabel}>Points</Text>
-          </Card>
-        </View>
-
-        {/* Today's progress */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Today</Text>
-          <Text style={styles.progressSubtext}>
-            {stats.completedToday} / {expectedPerDay} sessions completed
+        {/* Status */}
+        <Card style={styles.statusCard}>
+          <Text style={styles.statusEmoji}>
+            {fcmPermissionGranted ? '✅' : '⚠️'}
           </Text>
-          <ProgressBar progress={todayRate} color={theme.colors.primary} />
-        </Card>
-
-        {/* Weekly completion rate */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>This Week</Text>
-          <Text style={styles.progressSubtext}>
-            {Math.round(stats.weeklyCompletionRate * 100)}% adherence
+          <Text style={styles.statusTitle}>
+            {fcmPermissionGranted ? "You're scheduled" : 'Notifications off'}
           </Text>
-          <ProgressBar
-            progress={stats.weeklyCompletionRate}
-            color={
-              stats.weeklyCompletionRate >= 0.8
-                ? theme.colors.success
-                : theme.colors.warning
-            }
-          />
-          {!stats.onenessReached && (
-            <Text style={styles.onenessHint}>
-              Maintain ≥ 80% weekly adherence to unlock Oneness 🌟
-            </Text>
-          )}
+          <Text style={styles.statusSub}>
+            {fcmPermissionGranted
+              ? 'Reminders will arrive automatically'
+              : 'Enable notifications in Settings'}
+          </Text>
         </Card>
 
-        {/* Badges */}
+        {/* Next reminder */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Badges</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.badgeRow}>
-              {BADGES.map(badge => (
-                <BadgeDisplay
-                  key={badge.id}
-                  badge={badge}
-                  earned={stats.badges.includes(badge.id)}
-                />
-              ))}
-            </View>
-          </ScrollView>
+          <Text style={styles.sectionTitle}>Next Reminder</Text>
+          <Text style={styles.bigValue}>{nextReminder}</Text>
         </Card>
 
-        {/* Session history */}
+        {/* Current schedule */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>History</Text>
-          {historyLoading ? (
-            <ActivityIndicator color={theme.colors.primary} />
-          ) : history.length === 0 ? (
-            <Text style={styles.emptyText}>
-              No sessions yet — begin your first meditation!
+          <Text style={styles.sectionTitle}>Current Program</Text>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Week</Text>
+            <Text style={styles.rowValue}>{currentWeek}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Frequency</Text>
+            <Text style={styles.rowValue}>
+              Every {weekConfig.intervalMinutes} min
             </Text>
-          ) : (
-            <FlatList
-              data={history}
-              keyExtractor={item => item.id}
-              renderItem={({item}) => <SessionRow session={item} />}
-              scrollEnabled={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
-          )}
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Awake window</Text>
+            <Text style={styles.rowValue}>
+              {fmtHour(awakeStart)} – {fmtHour(awakeEnd)}
+            </Text>
+          </View>
+        </Card>
+
+        {/* How it works */}
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>How It Works</Text>
+          <Text style={styles.howText}>
+            When a reminder arrives, pause wherever you are. Look slightly
+            up-right with eyes open. Hold joyful anticipation for 10 seconds.
+            That's it — no app interaction needed.
+          </Text>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -189,75 +123,43 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.sm,
   },
-  onenessBanner: {
-    backgroundColor: theme.colors.secondary + '22',
-    borderColor: theme.colors.secondary,
-    borderWidth: 1,
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-  },
-  onenessTitle: {
+  statusCard: {alignItems: 'center', gap: theme.spacing.xs, paddingVertical: theme.spacing.xl},
+  statusEmoji: {fontSize: 40},
+  statusTitle: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.secondary,
+    color: theme.colors.textPrimary,
   },
-  onenessSubtitle: {
+  statusSub: {
+    fontSize: theme.typography.fontSize.sm,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.xs,
-  },
-  summaryRow: {flexDirection: 'row', gap: theme.spacing.sm},
-  summaryCard: {flex: 1, alignItems: 'center', padding: theme.spacing.md},
-  summaryValue: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.primary,
-  },
-  summaryLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
     textAlign: 'center',
   },
   section: {gap: theme.spacing.sm},
   sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.textPrimary,
   },
-  progressSubtext: {
-    fontSize: theme.typography.fontSize.sm,
+  bigValue: {
+    fontSize: theme.typography.fontSize['2xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  row: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
+  rowLabel: {
+    fontSize: theme.typography.fontSize.base,
     color: theme.colors.textSecondary,
   },
-  onenessHint: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: theme.spacing.xs,
-  },
-  badgeRow: {flexDirection: 'row', gap: theme.spacing.md, paddingVertical: theme.spacing.sm},
-  sessionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-  },
-  sessionLeft: {flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm},
-  sessionIcon: {fontSize: 20},
-  sessionDate: {
-    color: theme.colors.textPrimary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  sessionDetail: {
-    color: theme.colors.textMuted,
-    fontSize: theme.typography.fontSize.xs,
-  },
-  sessionPoints: {
-    color: theme.colors.gold,
-    fontSize: theme.typography.fontSize.sm,
+  rowValue: {
+    fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.textPrimary,
   },
-  separator: {height: 1, backgroundColor: theme.colors.divider},
-  emptyText: {color: theme.colors.textMuted, fontStyle: 'italic'},
+  divider: {height: 1, backgroundColor: theme.colors.divider},
+  howText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: theme.typography.fontSize.sm * 1.7,
+  },
 });

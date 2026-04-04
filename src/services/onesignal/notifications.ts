@@ -1,13 +1,9 @@
 /**
- * OneSignal push notification service (v4 — compatible with RN 0.74)
- *
- * SETUP STEPS:
- * 1. Create a free account at https://onesignal.com
- * 2. Create an app → select "Apple iOS" platform
- * 3. Upload your APNs certificate (Xcode → Signing & Capabilities → Push Notifications)
- * 4. Copy your OneSignal App ID into .env as ONESIGNAL_APP_ID
+ * OneSignal push notification service.
+ * Notifications are vibration-only (no sound).
  */
 import OneSignal from 'react-native-onesignal';
+import {acknowledgeReminder} from '@/services/scheduler';
 import {store} from '@/store';
 import {setFcmPermission, setFcmToken, addNotification} from '@/store/slices/notificationSlice';
 import {setAlarmLevel} from '@/store/slices/meditationSlice';
@@ -20,17 +16,15 @@ const ONESIGNAL_APP_ID =
 
 export async function initializeNotifications() {
   if (__DEV__) {
-    OneSignal.setLogLevel(6, 0); // verbose
+    OneSignal.setLogLevel(6, 0);
   }
 
   OneSignal.setAppId(ONESIGNAL_APP_ID);
 
-  // Request push permission
   OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
     store.dispatch(setFcmPermission(accepted));
   });
 
-  // Store the player ID
   OneSignal.getDeviceState().then(async (state: any) => {
     if (state?.userId) {
       store.dispatch(setFcmToken(state.userId));
@@ -42,7 +36,6 @@ export async function initializeNotifications() {
     }
   });
 
-  // Foreground notification received
   OneSignal.setNotificationWillShowInForegroundHandler((event: any) => {
     const notif = event.getNotification();
 
@@ -62,12 +55,12 @@ export async function initializeNotifications() {
       store.dispatch(setAlarmLevel(alarmLevel));
     }
 
-    // Show the notification while in foreground
+    // Display notification without sound — vibration only
+    // Sound is disabled via OneSignal dashboard notification settings
     event.complete(notif);
   });
 
-  // Notification tapped
-  OneSignal.setNotificationOpenedHandler((openedEvent: any) => {
-    console.log('[OneSignal] Notification opened:', openedEvent.notification.notificationId);
+  OneSignal.setNotificationOpenedHandler((_openedEvent: any) => {
+    acknowledgeReminder();
   });
 }
