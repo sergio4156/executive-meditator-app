@@ -17,6 +17,8 @@ import {useAppDispatch, useAppSelector} from '@/store';
 import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {completeOnboarding, resetOnboarding} from '@/store/slices/notificationSlice';
 import {signOut} from '@/services/supabase/auth';
+import {syncUserSchedule} from '@/services/supabase/database';
+import {supabase} from '@/config/supabase';
 import {Card} from '@/components/Card';
 import {theme} from '@/theme';
 import {WEEK_CONFIG} from '@/utils/meditation';
@@ -37,6 +39,18 @@ export function SettingsScreen() {
 
   const [localAwakeStart, setLocalAwakeStart] = useState(awakeStart);
   const [localAwakeEnd, setLocalAwakeEnd] = useState(awakeEnd);
+
+  const syncSchedule = async (
+    week: 1 | 2 | 3,
+    start: number,
+    end: number,
+  ) => {
+    const {data: sessionData} = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id;
+    if (uid) {
+      syncUserSchedule(uid, week, start, end).catch(console.warn);
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -93,7 +107,10 @@ export function SettingsScreen() {
                   styles.weekButton,
                   currentWeek === week && styles.weekButtonActive,
                 ]}
-                onPress={() => dispatch(setCurrentWeek(week))}
+                onPress={() => {
+                  dispatch(setCurrentWeek(week));
+                  syncSchedule(week, localAwakeStart, localAwakeEnd);
+                }}
                 activeOpacity={0.8}>
                 <Text
                   style={[
@@ -130,6 +147,7 @@ export function SettingsScreen() {
                     const v = Math.max(4, localAwakeStart - 1);
                     setLocalAwakeStart(v);
                     dispatch(completeOnboarding({awakeStart: v, awakeEnd: localAwakeEnd}));
+                    syncSchedule(currentWeek, v, localAwakeEnd);
                   }}>
                   <Text style={styles.stepText}>−</Text>
                 </TouchableOpacity>
@@ -140,6 +158,7 @@ export function SettingsScreen() {
                     const v = Math.min(localAwakeEnd - 1, localAwakeStart + 1);
                     setLocalAwakeStart(v);
                     dispatch(completeOnboarding({awakeStart: v, awakeEnd: localAwakeEnd}));
+                    syncSchedule(currentWeek, v, localAwakeEnd);
                   }}>
                   <Text style={styles.stepText}>+</Text>
                 </TouchableOpacity>
@@ -155,6 +174,7 @@ export function SettingsScreen() {
                     const v = Math.max(localAwakeStart + 1, localAwakeEnd - 1);
                     setLocalAwakeEnd(v);
                     dispatch(completeOnboarding({awakeStart: localAwakeStart, awakeEnd: v}));
+                    syncSchedule(currentWeek, localAwakeStart, v);
                   }}>
                   <Text style={styles.stepText}>−</Text>
                 </TouchableOpacity>
@@ -165,6 +185,7 @@ export function SettingsScreen() {
                     const v = Math.min(23, localAwakeEnd + 1);
                     setLocalAwakeEnd(v);
                     dispatch(completeOnboarding({awakeStart: localAwakeStart, awakeEnd: v}));
+                    syncSchedule(currentWeek, localAwakeStart, v);
                   }}>
                   <Text style={styles.stepText}>+</Text>
                 </TouchableOpacity>

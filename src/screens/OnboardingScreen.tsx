@@ -15,6 +15,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAppDispatch} from '@/store';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
+import {syncUserSchedule} from '@/services/supabase/database';
+import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
 function HourPicker({
@@ -64,6 +66,12 @@ export function OnboardingScreen() {
   const handleContinue = async () => {
     await AsyncStorage.setItem('onboarding', JSON.stringify({awakeStart, awakeEnd}));
     dispatch(completeOnboarding({awakeStart, awakeEnd}));
+    // Sync schedule to Supabase so the Edge Function can send reminders
+    const {data: sessionData} = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id;
+    if (uid) {
+      syncUserSchedule(uid, 1, awakeStart, awakeEnd).catch(console.warn);
+    }
   };
 
   const totalHours = awakeEnd - awakeStart;
