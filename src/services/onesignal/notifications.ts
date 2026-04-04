@@ -11,8 +11,7 @@ import {saveOneSignalId} from '@/services/supabase/database';
 import {supabase} from '@/config/supabase';
 import type {AlarmLevel} from '@/store/slices/meditationSlice';
 
-const ONESIGNAL_APP_ID =
-  process.env.ONESIGNAL_APP_ID ?? 'your-onesignal-app-id';
+const ONESIGNAL_APP_ID = '47644693-c8cb-4fca-8d72-544a2ddf52fe';
 
 export async function initializeNotifications() {
   if (__DEV__) {

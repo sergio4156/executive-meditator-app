@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741644100824",
+    "project_id": "executive-meditator-app",
+    "storage_bucket": "executive-meditator-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741644100824:android:2795d490b1c84c9d3e63ad",
+        "android_client_info": {
+          "package_name": "com.executivemeditator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuU6_6r75jeBeO0SS28r_xHoWbljzRpHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

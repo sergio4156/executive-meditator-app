@@ -52,6 +52,9 @@ buck-out/
 # Metro
 .metro-health-check*
 
+# Supabase
+supabase/.temp/
+
 # Testing
 coverage/
 

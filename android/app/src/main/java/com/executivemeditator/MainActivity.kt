@@ -1,4 +1,4 @@
-package com.helloworld
+package com.executivemeditator
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
