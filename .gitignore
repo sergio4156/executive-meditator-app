@@ -55,6 +55,11 @@ buck-out/
 # Supabase
 supabase/.temp/
 
+# Next.js
+.next/
+out/
+website/next-env.d.ts
+
 # Testing
 coverage/
 
