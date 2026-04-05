@@ -1,6 +1,10 @@
 package com.executivemeditator
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.media.AudioAttributes
+import android.os.Build
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -39,5 +43,39 @@ class MainApplication : Application(), ReactApplication {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       load()
     }
+    createMeditationNotificationChannel()
+  }
+
+  /**
+   * Creates a silent-vibration-only notification channel for meditation reminders.
+   * Using a dedicated channel lets us vibrate the device regardless of ringer mode,
+   * without playing any sound — even when the phone ringer is on.
+   */
+  private fun createMeditationNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val channel = NotificationChannel(
+        MEDITATION_CHANNEL_ID,
+        "Meditation Reminders",
+        NotificationManager.IMPORTANCE_DEFAULT
+      ).apply {
+        description = "Silent vibration reminders to meditate"
+        // Disable sound entirely
+        setSound(null, AudioAttributes.Builder()
+          .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+          .build())
+        // Enable vibration
+        enableVibration(true)
+        vibrationPattern = longArrayOf(0, 400, 200, 400)
+        // Disable the notification light
+        enableLights(false)
+      }
+
+      val manager = getSystemService(NotificationManager::class.java)
+      manager.createNotificationChannel(channel)
+    }
+  }
+
+  companion object {
+    const val MEDITATION_CHANNEL_ID = "meditation_reminders"
   }
 }

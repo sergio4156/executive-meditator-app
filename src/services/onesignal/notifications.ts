@@ -19,6 +19,9 @@ export async function initializeNotifications() {
   }
 
   OneSignal.setAppId(ONESIGNAL_APP_ID);
+  // Note: the 'meditation_reminders' Android notification channel (silent + vibration-only)
+  // is created in MainApplication.kt on app startup. To use it, set
+  // android_channel_id: 'meditation_reminders' in any notification sent via the OneSignal API.
 
   OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
     store.dispatch(setFcmPermission(accepted));
