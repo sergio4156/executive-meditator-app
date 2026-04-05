@@ -55,15 +55,15 @@ export async function POST(request: NextRequest) {
 
     // ── Send email notification via Resend ────────────────────────────────
     const resendApiKey = process.env.RESEND_API_KEY;
-    const notificationEmail = process.env.NOTIFICATION_EMAIL;
+    const notificationEmails = process.env.NOTIFICATION_EMAIL?.split(',').map(e => e.trim()).filter(Boolean);
 
-    if (resendApiKey && notificationEmail) {
+    if (resendApiKey && notificationEmails?.length) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
         // Until you have a custom domain, Resend provides onboarding@resend.dev for testing.
         // Replace with your own domain once set up: e.g. notifications@executivemeditator.com
         from: 'Executive Meditator <onboarding@resend.dev>',
-        to: notificationEmail,
+        to: notificationEmails,
         replyTo: email,
         subject: `New Corporate Inquiry — ${company}`,
         html: `

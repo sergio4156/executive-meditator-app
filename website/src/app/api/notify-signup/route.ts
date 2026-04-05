@@ -6,13 +6,13 @@ export async function POST(request: NextRequest) {
     const { fullName, email } = await request.json();
 
     const resendApiKey = process.env.RESEND_API_KEY;
-    const notificationEmail = process.env.NOTIFICATION_EMAIL;
+    const notificationEmails = process.env.NOTIFICATION_EMAIL?.split(',').map(e => e.trim()).filter(Boolean);
 
-    if (resendApiKey && notificationEmail) {
+    if (resendApiKey && notificationEmails?.length) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
         from: 'Executive Meditator <onboarding@resend.dev>',
-        to: notificationEmail,
+        to: notificationEmails,
         subject: `New Executive Account — ${fullName}`,
         html: `
           <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #F8F5F0; border-radius: 4px;">
