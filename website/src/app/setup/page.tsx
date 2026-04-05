@@ -23,6 +23,7 @@ export default function SetupPage() {
         password,
         options: {
           data: { full_name: fullName },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/setup/confirmed`,
         },
       });
 
@@ -30,6 +31,13 @@ export default function SetupPage() {
         setError(signUpError.message);
         return;
       }
+
+      // Notify owner of new signup
+      await fetch('/api/notify-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email }),
+      }).catch(() => {}); // fire-and-forget, don't block UX
 
       setSuccess(true);
     } catch {
