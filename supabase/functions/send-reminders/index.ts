@@ -96,6 +96,8 @@ serve(async (_req) => {
           // Vibration only — no sound
           ios_sound: 'nil',
           android_sound: 'nil',
+          // Route through the silent vibration-only channel created in MainApplication.kt
+          android_channel_id: 'meditation_reminders',
           // Additional data for in-app handling
           data: {type: 'meditation_reminder'},
         }),
