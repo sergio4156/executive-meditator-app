@@ -65,7 +65,7 @@ class MainApplication : Application(), ReactApplication {
           .build())
         // Enable vibration
         enableVibration(true)
-        vibrationPattern = longArrayOf(0, 400, 200, 400)
+        vibrationPattern = longArrayOf(0, 800, 400, 800)
         // Disable the notification light
         enableLights(false)
       }
