@@ -92,7 +92,6 @@ serve(async (_req) => {
         include_player_ids: playerIds,
         ios_sound: 'nil',
         android_sound: 'nil',
-        android_channel_id: 'meditation_reminders',
         ...overrides,
       });
 
@@ -115,7 +114,7 @@ serve(async (_req) => {
 
     // Second notification — end of 10-second meditation
     const endMessage = END_MESSAGES[Math.floor(Math.random() * END_MESSAGES.length)];
-    const sendAfter = new Date(now.getTime() + 10_000).toUTCString();
+    const sendAfter = new Date(now.getTime() + 10_000).toISOString();
     await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
@@ -131,6 +130,8 @@ serve(async (_req) => {
     });
 
     const result = await onesignalRes.json();
+
+    console.log('OneSignal result:', JSON.stringify(result));
 
     return new Response(
       JSON.stringify({sent: playerIds.length, onesignal: result}),
