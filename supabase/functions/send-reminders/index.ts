@@ -32,6 +32,13 @@ const MESSAGES = [
   'A moment of stillness awaits you.',
 ];
 
+const END_MESSAGES = [
+  'Well done. Carry that stillness forward.',
+  'Complete. Return to your day with clarity.',
+  'That\'s it. You just reset your mind.',
+  'Session complete. Back to greatness.',
+];
+
 serve(async (_req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -79,7 +86,17 @@ serve(async (_req) => {
     // Pick a random message for variety
     const message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
 
-    // Send via OneSignal REST API — vibration only, no sound
+    const notifPayload = (overrides: Record<string, unknown>) =>
+      JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        include_player_ids: playerIds,
+        ios_sound: 'nil',
+        android_sound: 'nil',
+        android_channel_id: 'meditation_reminders',
+        ...overrides,
+      });
+
+    // First notification — start of meditation
     const onesignalRes = await fetch(
       'https://onesignal.com/api/v1/notifications',
       {
@@ -88,21 +105,30 @@ serve(async (_req) => {
           'Content-Type': 'application/json',
           Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
         },
-        body: JSON.stringify({
-          app_id: ONESIGNAL_APP_ID,
-          include_player_ids: playerIds,
+        body: notifPayload({
           headings: {en: 'Time to meditate'},
           contents: {en: message},
-          // Vibration only — no sound
-          ios_sound: 'nil',
-          android_sound: 'nil',
-          // Route through the silent vibration-only channel created in MainApplication.kt
-          android_channel_id: 'meditation_reminders',
-          // Additional data for in-app handling
           data: {type: 'meditation_reminder'},
         }),
       },
     );
+
+    // Second notification — end of 10-second meditation
+    const endMessage = END_MESSAGES[Math.floor(Math.random() * END_MESSAGES.length)];
+    const sendAfter = new Date(now.getTime() + 10_000).toUTCString();
+    await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+      },
+      body: notifPayload({
+        headings: {en: 'Meditation complete'},
+        contents: {en: endMessage},
+        send_after: sendAfter,
+        data: {type: 'meditation_end'},
+      }),
+    });
 
     const result = await onesignalRes.json();
 
