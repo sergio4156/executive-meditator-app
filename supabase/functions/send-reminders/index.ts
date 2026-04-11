@@ -112,9 +112,10 @@ serve(async (_req) => {
       },
     );
 
-    // Second notification — end of 10-second meditation
+    // Wait 10 seconds then send end-of-meditation notification
+    await new Promise(resolve => setTimeout(resolve, 10_000));
+
     const endMessage = END_MESSAGES[Math.floor(Math.random() * END_MESSAGES.length)];
-    const sendAfter = new Date(now.getTime() + 10_000).toISOString();
     await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
@@ -124,7 +125,6 @@ serve(async (_req) => {
       body: notifPayload({
         headings: {en: 'Meditation complete'},
         contents: {en: endMessage},
-        send_after: sendAfter,
         data: {type: 'meditation_end'},
       }),
     });
