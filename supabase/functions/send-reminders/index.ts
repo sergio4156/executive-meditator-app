@@ -135,7 +135,7 @@ serve(async (_req) => {
           }),
         });
         resolve();
-      }, 10_000);
+      }, 20_000);
     });
 
     // Register background work so Deno keeps running after response is sent
