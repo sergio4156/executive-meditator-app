@@ -112,26 +112,36 @@ serve(async (_req) => {
       },
     );
 
-    // Wait 10 seconds then send end-of-meditation notification
-    await new Promise(resolve => setTimeout(resolve, 10_000));
+    const result = await onesignalRes.json();
+    console.log('OneSignal result:', JSON.stringify(result));
 
+    // Fire end-of-meditation notification in background after 10 seconds
+    // (not awaited so the HTTP response returns immediately before pg_net times out)
     const endMessage = END_MESSAGES[Math.floor(Math.random() * END_MESSAGES.length)];
-    await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
-      },
-      body: notifPayload({
-        headings: {en: 'Meditation complete'},
-        contents: {en: endMessage},
-        data: {type: 'meditation_end'},
-      }),
+    console.log('Scheduling end notification in 10 seconds...');
+    const sendEndNotification = new Promise<void>(resolve => {
+      setTimeout(async () => {
+        console.log('Sending end notification now');
+        await fetch('https://onesignal.com/api/v1/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+          },
+          body: notifPayload({
+            headings: {en: 'Meditation complete'},
+            contents: {en: endMessage},
+            data: {type: 'meditation_end'},
+          }),
+        });
+        resolve();
+      }, 10_000);
     });
 
-    const result = await onesignalRes.json();
-
-    console.log('OneSignal result:', JSON.stringify(result));
+    // Register background work so Deno keeps running after response is sent
+    if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
+      (globalThis as any).EdgeRuntime.waitUntil(sendEndNotification);
+    }
 
     return new Response(
       JSON.stringify({sent: playerIds.length, onesignal: result}),
