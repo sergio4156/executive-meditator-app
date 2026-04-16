@@ -55,21 +55,20 @@ export default function HeroSection() {
       />
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center" style={{ marginTop: 'clamp(64px, 10vh, 120px)' }}>
         {/* Logo mark */}
         <motion.div
           custom={0}
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mb-8"
+          className="mb-8 flex justify-center"
         >
-          <span
-            className="font-serif text-5xl md:text-7xl tracking-[0.3em] text-gold-500 font-light select-none"
-            style={{ letterSpacing: '0.25em' }}
-          >
-            T&middot;E&middot;M
-          </span>
+          <img
+            src="/temthree.jpg"
+            alt="T.E.M."
+            className="w-24 h-24 md:w-32 md:h-32 object-contain relative z-0 rounded-2xl shadow-lg"
+          />
         </motion.div>
 
         {/* Headline */}
