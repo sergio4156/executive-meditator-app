@@ -1,13 +1,19 @@
 import { NextRequest } from 'next/server';
 
-const mockCreate = jest.fn();
-jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
+// jest.mock is hoisted — factory must not reference block-scoped variables.
+// We expose a stable object so tests can swap out the mock after hoisting.
+const mockStripe = {
+  create: jest.fn(),
+};
+
+jest.mock('stripe', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
     checkout: {
-      sessions: { create: mockCreate },
+      sessions: { create: mockStripe.create },
     },
-  }));
-});
+  })),
+}));
 
 import { POST } from '../checkout/route';
 
@@ -22,7 +28,7 @@ function makeRequest(body: object = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
-  mockCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/test-session' });
+  mockStripe.create.mockResolvedValue({ url: 'https://checkout.stripe.com/test-session' });
 });
 
 describe('POST /api/stripe/checkout', () => {
@@ -39,7 +45,7 @@ describe('POST /api/stripe/checkout', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toBe('https://checkout.stripe.com/test-session');
-    expect(mockCreate).toHaveBeenCalledWith(
+    expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: 'payment',
         customer_email: 'user@example.com',
@@ -49,7 +55,7 @@ describe('POST /api/stripe/checkout', () => {
 
   it('charges $500 (50000 cents)', async () => {
     await POST(makeRequest({ email: 'user@example.com' }));
-    expect(mockCreate).toHaveBeenCalledWith(
+    expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: expect.arrayContaining([
           expect.objectContaining({
@@ -61,7 +67,7 @@ describe('POST /api/stripe/checkout', () => {
   });
 
   it('returns 500 when Stripe throws', async () => {
-    mockCreate.mockRejectedValue(new Error('Stripe error'));
+    mockStripe.create.mockRejectedValue(new Error('Stripe error'));
     const res = await POST(makeRequest({ email: 'user@example.com' }));
     expect(res.status).toBe(500);
   });

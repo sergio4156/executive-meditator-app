@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,8 +10,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: '/setup' });
     }
 
-    // Dynamically import stripe to avoid build errors if key isn't set
-    const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2025-02-24.acacia',
     });

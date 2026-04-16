@@ -2,44 +2,41 @@
  * Jest global setup — mock native modules that Jest cannot run.
  */
 
-// Mock @react-native-firebase modules
-jest.mock('@react-native-firebase/app', () => ({}));
-jest.mock('@react-native-firebase/auth', () => () => ({
-  onAuthStateChanged: jest.fn(() => jest.fn()),
-  signInWithEmailAndPassword: jest.fn(),
-  createUserWithEmailAndPassword: jest.fn(),
-  signInAnonymously: jest.fn(),
-  signOut: jest.fn(),
-  currentUser: null,
-  AuthorizationStatus: {AUTHORIZED: 1, PROVISIONAL: 2},
-}));
-jest.mock('@react-native-firebase/firestore', () => {
-  const collection = jest.fn(() => ({
-    doc: jest.fn(() => ({
-      get: jest.fn(() => Promise.resolve({exists: false, data: () => ({})})),
-      set: jest.fn(() => Promise.resolve()),
-      collection: jest.fn(() => ({
-        doc: jest.fn(() => ({set: jest.fn(() => Promise.resolve())})),
-        orderBy: jest.fn(() => ({
-          limit: jest.fn(() => ({
-            get: jest.fn(() => Promise.resolve({docs: []})),
-          })),
-        })),
-      })),
+// Mock @supabase/supabase-js
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    auth: {
+      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+      signInWithOtp: jest.fn(() => Promise.resolve({ error: null })),
+      signOut: jest.fn(() => Promise.resolve({ error: null })),
+      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      exchangeCodeForSession: jest.fn(() => Promise.resolve({ error: null })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
     })),
-  }));
-  const fn = () => ({collection});
-  fn.FieldValue = {serverTimestamp: jest.fn()};
-  return fn;
-});
-jest.mock('@react-native-firebase/messaging', () => () => ({
-  requestPermission: jest.fn(() => Promise.resolve(1)),
-  getToken: jest.fn(() => Promise.resolve('mock-token')),
-  onTokenRefresh: jest.fn(),
-  onMessage: jest.fn(),
-  onNotificationOpenedApp: jest.fn(),
-  getInitialNotification: jest.fn(() => Promise.resolve(null)),
-  AuthorizationStatus: {AUTHORIZED: 1, PROVISIONAL: 2},
+  })),
+}));
+
+// Mock react-native-onesignal
+jest.mock('react-native-onesignal', () => ({
+  OneSignal: {
+    initialize: jest.fn(),
+    Notifications: {
+      requestPermission: jest.fn(() => Promise.resolve(true)),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    },
+    User: {
+      pushSubscription: {
+        getIdAsync: jest.fn(() => Promise.resolve('mock-onesignal-id')),
+      },
+    },
+  },
 }));
 
 // Mock Lottie
