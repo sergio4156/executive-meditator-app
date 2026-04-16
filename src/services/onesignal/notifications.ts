@@ -11,6 +11,8 @@ import {saveOneSignalId} from '@/services/supabase/database';
 import {supabase} from '@/config/supabase';
 import type {AlarmLevel} from '@/store/slices/meditationSlice';
 
+// TODO: read from env via react-native-config once a staging environment exists
+// (requires adding react-native-config and touching native iOS/Android build config)
 const ONESIGNAL_APP_ID = '47644693-c8cb-4fca-8d72-544a2ddf52fe';
 
 export async function initializeNotifications() {

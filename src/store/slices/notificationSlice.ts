@@ -4,6 +4,7 @@ export interface AppNotification {
   id: string;
   title: string;
   body: string;
+  // TODO: add 'meditation_end' — Edge Function sends type: 'meditation_end' for the closing notification
   type: 'meditation_reminder' | 'alarm' | 'general';
   receivedAt: number;
   read: boolean;

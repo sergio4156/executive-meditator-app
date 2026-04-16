@@ -15,6 +15,9 @@ let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 let missedSessions = 0;
 let lastAcknowledgedAt: number = Date.now();
 
+// TODO: startScheduler() is never called. Wire it up in AppNavigator once
+// onboardingComplete becomes true, and call stopScheduler() on sign-out.
+// Guard against double-starts — stopScheduler() inside handles that already.
 export function startScheduler() {
   stopScheduler();
   schedulerInterval = setInterval(checkSchedule, 60_000);
