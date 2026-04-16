@@ -33,9 +33,9 @@ const fadeUp = {
 const steps = [
   {
     number: '01',
-    title: 'Set Your Hourly Reminder',
+    title: 'Program the App',
     description:
-      'During Week 1, set a reminder for every hour of your waking day. Each alert is your invitation to pause — just for 10 seconds — and breathe into the Great Silence.',
+      'Enter the average number of hours you are awake each day. This is your only input — the app does the rest, scheduling your 10-second practice automatically throughout your day.',
   },
   {
     number: '02',
@@ -47,7 +47,7 @@ const steps = [
     number: '03',
     title: 'Integrate the Stillness',
     description:
-      'Week 3 brings reminders every 15 minutes. By now, the practice has begun to integrate naturally — moments of deep stillness arise not just on cue, but spontaneously throughout your day.',
+      'Week 3 brings reminders every 15 minutes. The practice: eyes open, gaze slightly up and to the right, bring up the Feeling of Joyful Anticipation — and Listen. Hold that gaze and feeling. The app vibrates when your 10 seconds are complete, so you never have to count. Watch the video demonstration.',
   },
 ];
 
@@ -275,11 +275,10 @@ export default function InstructionsSection() {
               className="mt-8 bg-sage-300/20 border border-sage-300/40 rounded-sm p-6"
             >
               <p className="font-sans text-sm text-text-muted leading-relaxed">
-                The app is designed to honor your calendar. Each reminder takes
-                nothing from you — only ten seconds — yet the cumulative effect
-                of this practice has been described by executives as
-                &ldquo;transformative&rdquo; and &ldquo;the highest ROI of any investment I have
-                made in myself.&rdquo;
+                The app is designed to honor your daily schedule. The cumulative
+                effect of this Listening — eyes up-right, with Joyful Anticipation
+                — has been described as &ldquo;transformative&rdquo;: the best investment
+                that can be made in self-expansion.
               </p>
             </motion.div>
           </motion.div>

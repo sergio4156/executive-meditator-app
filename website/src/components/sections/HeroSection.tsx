@@ -91,11 +91,11 @@ export default function HeroSection() {
           variants={fadeUp}
           className="font-sans text-base md:text-lg text-cream-200 opacity-80 max-w-2xl mx-auto leading-relaxed mb-10"
         >
-          With the Executive Meditator app we honor the 3 P&apos;s —{' '}
-          <span className="text-gold-400">Profits</span>,{' '}
+          With the Executive Meditator app the 3 P&apos;s are honored —{' '}
+          <span className="text-gold-400">Peace</span>,{' '}
           <span className="text-gold-400">Productivity</span>, and{' '}
-          <span className="text-gold-400">Peace</span>. In just 3 weeks of dedicated
-          time, you will experience the 3 P&apos;s.
+          <span className="text-gold-400">Profits</span>. In just 3 weeks you will
+          experience the 3 P&apos;s 10 seconds at a time.
         </motion.p>
 
         {/* CTAs */}

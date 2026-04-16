@@ -56,7 +56,7 @@ const tiers = [
     subtitle: 'Your entire team',
     price: '$0.99',
     description:
-      'Peace is not a privilege. At less than a dollar, every member of your organization gains access to the practice that transforms how work feels.',
+      'Peace is not a privilege. At less than a dollar, every team member of the organization gains access to the 10-second meditation — increasing the 3 P\'s for the entire organization.',
     cta: 'Get Access',
     featured: false,
     badge: null,
