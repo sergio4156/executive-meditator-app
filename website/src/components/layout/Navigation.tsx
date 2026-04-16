@@ -49,7 +49,7 @@ export default function Navigation() {
             : 'bg-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto pl-6 pr-10 lg:px-10">
+        <div className="max-w-7xl mx-auto pl-6 pr-10 md:px-10">
           <div className="flex items-center justify-between h-18 py-4">
             {/* Logo */}
             <Link
@@ -62,7 +62,7 @@ export default function Navigation() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
@@ -79,7 +79,7 @@ export default function Navigation() {
             <div className="flex items-center gap-4">
               <Link
                 href="/setup"
-                className="hidden lg:inline-flex items-center px-5 py-2 border border-gold-500 text-gold-400 font-sans text-sm tracking-widest uppercase hover:bg-navy-900 transition-colors duration-200 rounded-sm"
+                className="hidden md:inline-flex items-center px-5 py-2 border border-gold-500 text-gold-400 font-sans text-sm tracking-widest uppercase hover:bg-navy-900 transition-colors duration-200 rounded-sm"
               >
                 Get Started
               </Link>
@@ -87,7 +87,7 @@ export default function Navigation() {
               {/* Hamburger */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden flex flex-col gap-1.5 p-2.5 min-h-[44px] min-w-[44px] items-center justify-center group"
+                className="md:hidden flex flex-col gap-1.5 p-2.5 min-h-[44px] min-w-[44px] items-center justify-center group"
                 aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               >
                 <span
@@ -112,7 +112,7 @@ export default function Navigation() {
 
         {/* Mobile menu */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ${
+          className={`md:hidden overflow-hidden transition-all duration-300 ${
             mobileOpen ? 'max-h-screen' : 'max-h-0'
           }`}
         >
