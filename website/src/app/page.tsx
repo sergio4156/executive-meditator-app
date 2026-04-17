@@ -5,8 +5,6 @@ import InstructionsSection from '@/components/sections/InstructionsSection';
 import VideoSection from '@/components/sections/VideoSection';
 import PricingSection from '@/components/sections/PricingSection';
 import CorporateSection from '@/components/sections/CorporateSection';
-import SecondVideoSection from '@/components/sections/SecondVideoSection';
-
 export default function Home() {
   return (
     <main>
@@ -16,7 +14,6 @@ export default function Home() {
       <VideoSection />
       <PricingSection />
       <CorporateSection />
-      <SecondVideoSection />
       <Footer />
     </main>
   );
