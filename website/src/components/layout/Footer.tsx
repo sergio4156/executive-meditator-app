@@ -116,10 +116,10 @@ export default function Footer() {
                 Connect
               </h3>
               <a
-                href="mailto:hello@executivemeditator.com"
+                href="mailto:hillisoralee@gmail.com"
                 className="font-sans text-sm text-cream-200 opacity-60 hover:opacity-100 hover:text-gold-400 transition-all duration-200"
               >
-                hello@executivemeditator.com
+                hillisoralee@gmail.com
               </a>
             </div>
           </div>
