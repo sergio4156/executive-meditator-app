@@ -9,6 +9,8 @@ import { motion, useInView } from 'framer-motion';
 // Vimeo embed example:    "https://player.vimeo.com/video/YOUR_VIDEO_ID"
 // ─────────────────────────────────────────────────────────────────────────────
 const VIDEO_EMBED_URL = 'https://www.youtube.com/embed/PvbYK9I_fGo';
+const VIDEO_ID = 'PvbYK9I_fGo';
+const THUMBNAIL_URL = `https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -86,28 +88,19 @@ export default function VideoSection() {
               onClick={() => VIDEO_EMBED_URL && setPlaying(true)}
               className="absolute inset-0 w-full h-full group flex items-center justify-center"
               style={{
-                background:
-                  'linear-gradient(135deg, #141E30 0%, #1B2B4B 50%, #0F1E35 100%)',
+                backgroundImage: `url(${THUMBNAIL_URL})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 cursor: VIDEO_EMBED_URL ? 'pointer' : 'default',
               }}
               aria-label="Play video"
             >
-              {/* Decorative grid lines */}
-              <div
-                className="absolute inset-0 opacity-5"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(#C4A962 1px, transparent 1px), linear-gradient(90deg, #C4A962 1px, transparent 1px)',
-                  backgroundSize: '60px 60px',
-                }}
-              />
-
-              {/* Subtle vignette */}
+              {/* Dark overlay so play button stays readable */}
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 40%, rgba(10,16,28,0.6) 100%)',
+                    'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10,16,28,0.25) 0%, rgba(10,16,28,0.55) 100%)',
                 }}
               />
 
