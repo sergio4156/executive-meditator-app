@@ -8,7 +8,7 @@ import { motion, useInView } from 'framer-motion';
 // YouTube embed example:  "https://www.youtube.com/embed/YOUR_VIDEO_ID"
 // Vimeo embed example:    "https://player.vimeo.com/video/YOUR_VIDEO_ID"
 // ─────────────────────────────────────────────────────────────────────────────
-const VIDEO_EMBED_URL = '';
+const VIDEO_EMBED_URL = 'https://www.youtube.com/embed/PvbYK9I_fGo';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
