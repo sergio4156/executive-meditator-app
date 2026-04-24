@@ -55,7 +55,7 @@ export default function Navigation() {
             <Link
               href="#hero"
               onClick={(e) => handleNavClick(e, '#hero')}
-              className="font-serif text-xl text-white tracking-wide hover:opacity-80 transition-opacity duration-200"
+              className="font-serif text-base md:text-xl text-white tracking-wide hover:opacity-80 transition-opacity duration-200 whitespace-nowrap"
             >
               The Executive{' '}
               <span className="text-gold-500">Meditator</span>
