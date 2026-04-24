@@ -15,7 +15,7 @@ export default function PrivacyPage() {
             href="/"
             className="font-serif text-2xl text-white tracking-widest"
           >
-            Executive <span className="text-gold-500">Meditator</span>
+            The Executive <span className="text-gold-500">Meditator</span>
           </Link>
         </div>
 

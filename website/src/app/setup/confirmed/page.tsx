@@ -47,7 +47,7 @@ export default function ConfirmedPage() {
     <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md text-center">
         <span className="font-serif text-2xl text-white tracking-widest">
-          Executive <span className="text-gold-500">Meditator</span>
+          The Executive <span className="text-gold-500">Meditator</span>
         </span>
 
         <div className="bg-navy-900 border border-navy-800 rounded-sm p-10 mt-10">

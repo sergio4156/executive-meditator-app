@@ -1,5 +1,5 @@
 /**
- * AuthScreen — Email/password sign-in. No guest access.
+ * AuthScreen — Email/password sign-in only. No guest access, no in-app sign up.
  * Users create their account on the website (executivemeditator.com/setup)
  * then sign in here with the same email and password.
  */
@@ -17,13 +17,10 @@ import {
   Image,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {signIn, signUp} from '@/services/supabase/auth';
+import {signIn} from '@/services/supabase/auth';
 import {theme} from '@/theme';
 
-type Mode = 'signin' | 'signup';
-
 export function AuthScreen() {
-  const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,19 +33,7 @@ export function AuthScreen() {
     }
     setLoading(true);
     try {
-      if (mode === 'signin') {
-        await signIn(email.trim(), password);
-      } else {
-        const result = await signUp(email.trim(), password);
-        if (!result.session) {
-          Alert.alert(
-            'Check Your Email',
-            'We sent you a confirmation link. Click it then come back and sign in.',
-            [{text: 'OK', onPress: () => setMode('signin')}],
-          );
-          return;
-        }
-      }
+      await signIn(email.trim(), password);
     } catch (err: any) {
       Alert.alert('Error', err.message ?? 'Authentication failed.');
     } finally {
@@ -103,20 +88,8 @@ export function AuthScreen() {
             {loading ? (
               <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
-              <Text style={styles.primaryButtonText}>
-                {mode === 'signin' ? 'Sign In' : 'Create Account'}
-              </Text>
+              <Text style={styles.primaryButtonText}>Sign In</Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={() => setMode(m => (m === 'signin' ? 'signup' : 'signin'))}>
-            <Text style={styles.toggleText}>
-              {mode === 'signin'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </Text>
           </TouchableOpacity>
 
           <Text style={styles.hint}>
@@ -190,8 +163,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.bold,
   },
-  toggleButton: {alignItems: 'center', paddingVertical: theme.spacing.sm},
-  toggleText: {color: theme.colors.primary, fontSize: theme.typography.fontSize.sm},
   hint: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,

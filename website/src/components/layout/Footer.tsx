@@ -21,7 +21,7 @@ export default function Footer() {
           {/* Column 1: Brand */}
           <div>
             <div className="font-serif text-2xl text-white mb-3">
-              Executive{' '}
+              The Executive{' '}
               <span className="text-gold-500">Meditator</span>
             </div>
             <p className="font-sans text-sm text-cream-200 opacity-60 tracking-widest uppercase mt-1">
