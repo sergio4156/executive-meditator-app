@@ -129,7 +129,7 @@ export default function Footer() {
         <div className="h-px bg-navy-800 mb-8" />
         <div className="flex flex-col md:flex-row justify-between items-center gap-3">
           <p className="font-sans text-xs text-cream-200 opacity-40">
-            &copy; {year} Executive Meditator. All rights reserved.
+            &copy; {year} The Executive Meditator. All rights reserved.
           </p>
           <p className="font-sans text-xs text-cream-200 opacity-40 italic font-serif">
             Designed for the executive mind.

@@ -202,7 +202,7 @@ export default function SetupPage() {
         </div>
 
         <p className="mt-6 text-center font-sans text-xs text-cream-200 opacity-40">
-          &copy; {new Date().getFullYear()} Executive Meditator. All rights reserved.
+          &copy; {new Date().getFullYear()} The Executive Meditator. All rights reserved.
         </p>
       </div>
     </div>

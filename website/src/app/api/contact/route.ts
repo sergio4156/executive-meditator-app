@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         // Until you have a custom domain, Resend provides onboarding@resend.dev for testing.
         // Replace with your own domain once set up: e.g. notifications@executivemeditator.com
-        from: 'Executive Meditator <onboarding@resend.dev>',
+        from: 'The Executive Meditator <onboarding@resend.dev>',
         to: notificationEmails,
         replyTo: email,
         subject: `New Corporate Inquiry — ${company}`,

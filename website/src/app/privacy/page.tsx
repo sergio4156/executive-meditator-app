@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy — Executive Meditator',
-  description: 'Privacy Policy for the Executive Meditator app and website.',
+  title: 'Privacy Policy — The Executive Meditator',
+  description: 'Privacy Policy for The Executive Meditator app and website.',
 };
 
 export default function PrivacyPage() {
@@ -37,8 +37,8 @@ export default function PrivacyPage() {
                 1. Who We Are
               </h2>
               <p>
-                Executive Meditator ("we", "us", or "our") operates the
-                executivemeditator.com website and the Executive Meditator
+                The Executive Meditator ("we", "us", or "our") operates the
+                executivemeditator.com website and The Executive Meditator
                 mobile application (collectively, the "Service"). We are
                 committed to protecting your personal information.
               </p>

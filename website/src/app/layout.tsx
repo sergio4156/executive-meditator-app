@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Executive Meditator | Profits, Productivity & Peace',
+  title: 'The Executive Meditator | Profits, Productivity & Peace',
   description:
     'The Executive Meditator app is designed for high-performing leaders who understand that true excellence requires stillness. Experience the 3 P\'s — Profits, Productivity, and Peace — in just 3 weeks.',
   keywords: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'The Executive Meditator' }],
   openGraph: {
-    title: 'Executive Meditator | Profits, Productivity & Peace',
+    title: 'The Executive Meditator | Profits, Productivity & Peace',
     description:
       'Designed for high-performing leaders. Experience the 3 P\'s — Profits, Productivity, and Peace — in just 3 weeks.',
     type: 'website',

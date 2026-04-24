@@ -81,13 +81,13 @@ async function sendDownloadEmail(email: string) {
 
   const resend = new Resend(resendApiKey);
   await resend.emails.send({
-    from: 'Executive Meditator <onboarding@resend.dev>',
+    from: 'The Executive Meditator <onboarding@resend.dev>',
     to: email,
-    subject: 'Welcome to Executive Meditator — download the app',
+    subject: 'Welcome to The Executive Meditator — download the app',
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #0F1E35; color: #F8F5F0; border-radius: 4px;">
         <h1 style="font-size: 28px; font-weight: 300; color: #C4A962; margin-bottom: 8px;">
-          Welcome to Executive Meditator
+          Welcome to The Executive Meditator
         </h1>
         <p style="font-size: 14px; color: #E8E3DB; opacity: 0.8; margin-bottom: 24px; border-bottom: 1px solid #1B2B4B; padding-bottom: 20px;">
           Your investment has been received. You now have full access to the program.

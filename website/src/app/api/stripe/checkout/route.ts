@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             currency: 'usd',
             unit_amount: 50000, // $500.00 in cents
             product_data: {
-              name: 'Executive Meditator — Executive Tier',
+              name: 'The Executive Meditator — Executive Tier',
               description:
                 'Full access to the Executive Meditator program. Includes the complete 3-week guided meditation journey designed for high-performing leaders.',
             },
