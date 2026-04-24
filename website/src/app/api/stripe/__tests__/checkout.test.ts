@@ -53,6 +53,24 @@ describe('POST /api/stripe/checkout', () => {
     );
   });
 
+  it('passes supabase_user_id through to Stripe session metadata', async () => {
+    await POST(makeRequest({ email: 'user@example.com', userId: 'uuid-123' }));
+    expect(mockStripe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { supabase_user_id: 'uuid-123' },
+      })
+    );
+  });
+
+  it('stores empty string in metadata when userId is omitted', async () => {
+    await POST(makeRequest({ email: 'user@example.com' }));
+    expect(mockStripe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { supabase_user_id: '' },
+      })
+    );
+  });
+
   it('charges $500 (50000 cents)', async () => {
     await POST(makeRequest({ email: 'user@example.com' }));
     expect(mockStripe.create).toHaveBeenCalledWith(

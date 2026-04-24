@@ -101,7 +101,7 @@ From that point, the Edge Function drives all push scheduling — the app itself
 
 | Slice | State |
 |---|---|
-| `authSlice` | `user`, `loading`, `error` |
+| `authSlice` | `user`, `loading`, `error`, `isPaid`, `isPaidLoading` |
 | `meditationSlice` | `currentWeek`, `alarmLevel`, `sessionCount` |
 | `notificationSlice` | `permission`, `playerId` |
 
@@ -119,7 +119,8 @@ Deployed to Vercel. All API routes run as serverless functions.
 | `/setup` | Onboarding — email sign-up form |
 | `/auth/callback` | Client-side page that exchanges the OTP code for a session via `supabase.auth.exchangeCodeForSession` |
 | `/setup/confirmed` | Post-verification confirmation, redirects to Stripe |
-| `/setup/success` | Post-payment success page |
+| `/setup/success` | Post-payment success page with App Store / Google Play download links |
+| `/privacy` | Privacy policy (required by Google Play Store) |
 
 ### API routes
 
@@ -177,6 +178,8 @@ Called by the corporate inquiry form (`#corporate` section).
 | `RESEND_API_KEY` | `/api/notify-signup`, `/api/contact` | Resend Dashboard → API Keys |
 | `NOTIFICATION_EMAIL` | `/api/notify-signup`, `/api/contact` | Your email (comma-separated for multiple) |
 | `NEXT_PUBLIC_SITE_URL` | Stripe redirect URLs | Your production URL, e.g. `https://executivemeditator.com` |
+| `NEXT_PUBLIC_GOOGLE_PLAY_URL` | `/setup/success` download button | Google Play Store listing URL (add once app is live) |
+| `NEXT_PUBLIC_APP_STORE_URL` | `/setup/success` download button | Apple App Store listing URL (add once app is live) |
 
 ---
 

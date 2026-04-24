@@ -21,6 +21,7 @@ A cross-platform React Native app (iOS + Android) that guides busy professionals
 | Progress dashboard with history | ✅ |
 | Email/password + anonymous auth (Supabase) | ✅ |
 | Oneness milestone tracking | ✅ |
+| Payment gating — app locked until purchase on website | ✅ |
 | Wearable integration | 🔜 |
 
 ---
@@ -54,6 +55,8 @@ src/
 │   └── AppNavigator.tsx     # Auth stack + main tabs
 ├── screens/
 │   ├── AuthScreen.tsx
+│   ├── PaywallScreen.tsx    # shown when authenticated but not paid
+│   ├── OnboardingScreen.tsx
 │   ├── HomeScreen.tsx
 │   ├── DashboardScreen.tsx
 │   ├── SettingsScreen.tsx
