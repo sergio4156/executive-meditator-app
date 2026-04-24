@@ -11,6 +11,16 @@ export async function saveOneSignalId(uid: string, playerId: string) {
   if (error) throw error;
 }
 
+export async function fetchIsPaid(uid: string): Promise<boolean> {
+  const {data, error} = await supabase
+    .from(TABLES.PROFILES)
+    .select('is_paid')
+    .eq('user_id', uid)
+    .single();
+  if (error) throw error;
+  return data?.is_paid === true;
+}
+
 export async function syncUserSchedule(
   uid: string,
   week: 1 | 2 | 3,

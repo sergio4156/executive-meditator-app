@@ -23,7 +23,7 @@ export default function ConfirmedPage() {
         const res = await fetch('/api/stripe/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: session.user.email }),
+          body: JSON.stringify({ email: session.user.email, userId: session.user.id }),
         });
 
         const { url } = await res.json();

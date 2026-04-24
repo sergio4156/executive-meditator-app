@@ -12,9 +12,10 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import {useAppDispatch, useAppSelector} from '@/store';
-import {setUser, setLoading} from '@/store/slices/authSlice';
+import {setUser, setLoading, setIsPaid, setIsPaidLoading} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
+import {fetchIsPaid} from '@/services/supabase/database';
 import {theme} from '@/theme';
 
 import {HomeScreen} from '@/screens/HomeScreen';
@@ -23,8 +24,9 @@ import {SettingsScreen} from '@/screens/SettingsScreen';
 import {NotificationsScreen} from '@/screens/NotificationsScreen';
 import {AuthScreen} from '@/screens/AuthScreen';
 import {OnboardingScreen} from '@/screens/OnboardingScreen';
+import {PaywallScreen} from '@/screens/PaywallScreen';
 
-export type AuthStackParamList = {Auth: undefined; Onboarding: undefined};
+export type AuthStackParamList = {Auth: undefined; Onboarding: undefined; Paywall: undefined};
 export type MainTabParamList = {
   Home: undefined;
   Dashboard: undefined;
@@ -77,7 +79,7 @@ function MainTabs() {
 
 export function AppNavigator() {
   const dispatch = useAppDispatch();
-  const {user, loading} = useAppSelector(s => s.auth);
+  const {user, loading, isPaid, isPaidLoading} = useAppSelector(s => s.auth);
   const onboardingComplete = useAppSelector(s => s.notifications.onboardingComplete);
 
   // Rehydrate onboarding state from AsyncStorage on boot
@@ -92,7 +94,7 @@ export function AppNavigator() {
 
   useEffect(() => {
     // Subscribe to Supabase auth state changes
-    const {data: {subscription}} = onAuthStateChange((_event, session) => {
+    const {data: {subscription}} = onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         dispatch(
           setUser({
@@ -102,8 +104,16 @@ export function AppNavigator() {
             isAnonymous: session.user.is_anonymous ?? false,
           }),
         );
+        dispatch(setIsPaidLoading(true));
+        try {
+          const paid = await fetchIsPaid(session.user.id);
+          dispatch(setIsPaid(paid));
+        } catch {
+          dispatch(setIsPaid(false));
+        }
       } else {
         dispatch(setUser(null));
+        dispatch(setIsPaid(false));
       }
       dispatch(setLoading(false));
     });
@@ -111,7 +121,7 @@ export function AppNavigator() {
     return () => subscription.unsubscribe();
   }, [dispatch]);
 
-  if (loading) {
+  if (loading || (user && isPaidLoading)) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -122,7 +132,11 @@ export function AppNavigator() {
   return (
     <NavigationContainer>
       {user ? (
-        onboardingComplete ? (
+        !isPaid ? (
+          <AuthStack.Navigator screenOptions={{headerShown: false}}>
+            <AuthStack.Screen name="Paywall" component={PaywallScreen} />
+          </AuthStack.Navigator>
+        ) : onboardingComplete ? (
           <MainTabs />
         ) : (
           <AuthStack.Navigator screenOptions={{headerShown: false}}>

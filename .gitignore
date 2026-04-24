@@ -67,3 +67,4 @@ coverage/
 .vscode/
 .idea/
 *.iml
+android/keystore.properties

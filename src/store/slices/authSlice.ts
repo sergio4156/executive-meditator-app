@@ -14,12 +14,16 @@ interface AuthState {
   user: AuthUser | null;
   loading: boolean;
   error: string | null;
+  isPaid: boolean;
+  isPaidLoading: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
-  loading: true, // true until Firebase resolves the initial auth state
+  loading: true, // true until Supabase resolves the initial auth state
   error: null,
+  isPaid: false,
+  isPaidLoading: false,
 };
 
 const authSlice = createSlice({
@@ -41,8 +45,15 @@ const authSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    setIsPaid(state, action: PayloadAction<boolean>) {
+      state.isPaid = action.payload;
+      state.isPaidLoading = false;
+    },
+    setIsPaidLoading(state, action: PayloadAction<boolean>) {
+      state.isPaidLoading = action.payload;
+    },
   },
 });
 
-export const {setUser, setLoading, setAuthError, clearError} = authSlice.actions;
+export const {setUser, setLoading, setAuthError, clearError, setIsPaid, setIsPaidLoading} = authSlice.actions;
 export default authSlice.reducer;

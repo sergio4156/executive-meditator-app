@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     });
 
     const body = await request.json().catch(() => ({}));
-    const { email } = body as { email?: string };
+    const { email, userId } = body as { email?: string; userId?: string };
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
+      metadata: { supabase_user_id: userId ?? '' },
       success_url: `${baseUrl}/setup/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/#pricing`,
     });
