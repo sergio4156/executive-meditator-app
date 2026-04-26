@@ -12,11 +12,13 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import {useAppDispatch, useAppSelector} from '@/store';
-import {setUser, setLoading, setIsPaid} from '@/store/slices/authSlice';
+import {setUser, setLoading, setIsPaid, setPaidAt} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
-import {fetchIsPaid} from '@/services/supabase/database';
+import {fetchPaymentStatus} from '@/services/supabase/database';
 import {syncOneSignalIdForUser} from '@/services/onesignal/notifications';
+import {setCurrentWeek} from '@/store/slices/meditationSlice';
+import {deriveWeek} from '@/utils/weekProgression';
 import {theme} from '@/theme';
 
 import {HomeScreen} from '@/screens/HomeScreen';
@@ -114,23 +116,33 @@ export function AppNavigator() {
         );
         syncOneSignalIdForUser(uid);
 
-        // Hydrate isPaid from cache so the navigator can render immediately,
-        // then refresh from the backend in the background.
-        const cached = await AsyncStorage.getItem(`isPaid:${uid}`);
-        dispatch(setIsPaid(cached === '1'));
+        // Hydrate isPaid + paidAt from cache so the navigator can render
+        // immediately, then refresh from the backend in the background.
+        const [cachedPaid, rawCachedPaidAt] = await Promise.all([
+          AsyncStorage.getItem(`isPaid:${uid}`),
+          AsyncStorage.getItem(`paidAt:${uid}`),
+        ]);
+        const cachedPaidAt = rawCachedPaidAt && rawCachedPaidAt.length > 0 ? rawCachedPaidAt : null;
+        dispatch(setIsPaid(cachedPaid === '1'));
+        dispatch(setPaidAt(cachedPaidAt));
+        dispatch(setCurrentWeek(deriveWeek(cachedPaidAt)));
         dispatch(setLoading(false));
 
-        fetchIsPaid(uid)
-          .then(paid => {
-            dispatch(setIsPaid(paid));
-            AsyncStorage.setItem(`isPaid:${uid}`, paid ? '1' : '0').catch(() => {});
+        fetchPaymentStatus(uid)
+          .then(({isPaid, paidAt}) => {
+            dispatch(setIsPaid(isPaid));
+            dispatch(setPaidAt(paidAt));
+            dispatch(setCurrentWeek(deriveWeek(paidAt)));
+            AsyncStorage.setItem(`isPaid:${uid}`, isPaid ? '1' : '0').catch(() => {});
+            AsyncStorage.setItem(`paidAt:${uid}`, paidAt ?? '').catch(() => {});
           })
           .catch(() => {
-            // Keep cached value on failure
+            // Keep cached values on failure
           });
       } else {
         dispatch(setUser(null));
         dispatch(setIsPaid(false));
+        dispatch(setPaidAt(null));
         dispatch(setLoading(false));
       }
     });

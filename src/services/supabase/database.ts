@@ -11,14 +11,22 @@ export async function saveOneSignalId(uid: string, playerId: string) {
   if (error) throw error;
 }
 
-export async function fetchIsPaid(uid: string): Promise<boolean> {
+export async function fetchPaymentStatus(
+  uid: string,
+): Promise<{isPaid: boolean; paidAt: string | null}> {
   const {data, error} = await supabase
     .from(TABLES.PROFILES)
-    .select('is_paid')
+    .select('is_paid, paid_at')
     .eq('user_id', uid)
     .single();
   if (error) throw error;
-  return data?.is_paid === true;
+  return {isPaid: data?.is_paid === true, paidAt: data?.paid_at ?? null};
+}
+
+/** @deprecated use fetchPaymentStatus instead */
+export async function fetchIsPaid(uid: string): Promise<boolean> {
+  const {isPaid} = await fetchPaymentStatus(uid);
+  return isPaid;
 }
 
 export async function syncUserSchedule(

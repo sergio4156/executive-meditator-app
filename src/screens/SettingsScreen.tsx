@@ -14,7 +14,6 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {useAppDispatch, useAppSelector} from '@/store';
-import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {completeOnboarding, resetOnboarding} from '@/store/slices/notificationSlice';
 import {signOut} from '@/services/supabase/auth';
 import {syncUserSchedule} from '@/services/supabase/database';
@@ -22,6 +21,7 @@ import {supabase} from '@/config/supabase';
 import {Card} from '@/components/Card';
 import {theme} from '@/theme';
 import {WEEK_CONFIG} from '@/utils/meditation';
+import {daysUntilNextWeek} from '@/utils/weekProgression';
 
 function fmtHour(h: number) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -31,8 +31,9 @@ function fmtHour(h: number) {
 
 export function SettingsScreen() {
   const dispatch = useAppDispatch();
-  const {user} = useAppSelector(s => s.auth);
+  const {user, paidAt} = useAppSelector(s => s.auth);
   const {currentWeek} = useAppSelector(s => s.meditation);
+  const daysToNext = daysUntilNextWeek(paidAt);
   const {fcmPermissionGranted, awakeStart, awakeEnd} = useAppSelector(
     s => s.notifications,
   );
@@ -93,42 +94,20 @@ export function SettingsScreen() {
           </TouchableOpacity>
         </Card>
 
-        {/* Program week */}
+        {/* Program week — auto-progresses based on time since payment */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Program Week</Text>
+          <Text style={styles.weekHeadline}>
+            Week {currentWeek} of 3
+          </Text>
           <Text style={styles.sectionSubtitle}>
             {WEEK_CONFIG[currentWeek].description}
           </Text>
-          <View style={styles.weekSelector}>
-            {([1, 2, 3] as const).map(week => (
-              <TouchableOpacity
-                key={week}
-                style={[
-                  styles.weekButton,
-                  currentWeek === week && styles.weekButtonActive,
-                ]}
-                onPress={() => {
-                  dispatch(setCurrentWeek(week));
-                  syncSchedule(week, localAwakeStart, localAwakeEnd);
-                }}
-                activeOpacity={0.8}>
-                <Text
-                  style={[
-                    styles.weekButtonText,
-                    currentWeek === week && styles.weekButtonTextActive,
-                  ]}>
-                  Week {week}
-                </Text>
-                <Text
-                  style={[
-                    styles.weekButtonSub,
-                    currentWeek === week && styles.weekButtonTextActive,
-                  ]}>
-                  Every {WEEK_CONFIG[week].intervalMinutes} min
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Text style={styles.weekProgressNote}>
+            {daysToNext == null
+              ? 'You have reached the final week. Reminders continue every 15 minutes.'
+              : `Week ${currentWeek + 1} begins in ${daysToNext} day${daysToNext === 1 ? '' : 's'}. Your program advances automatically.`}
+          </Text>
         </Card>
 
         {/* Awake window */}
@@ -274,29 +253,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontStyle: 'italic',
   },
-  weekSelector: {flexDirection: 'row', gap: theme.spacing.sm, marginTop: theme.spacing.xs},
-  weekButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    padding: theme.spacing.sm,
-    alignItems: 'center',
-  },
-  weekButtonActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '22',
-  },
-  weekButtonText: {
-    fontSize: theme.typography.fontSize.sm,
+  weekHeadline: {
+    fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    color: theme.colors.primary,
+    marginTop: theme.spacing.xs,
   },
-  weekButtonTextActive: {color: theme.colors.primary},
-  weekButtonSub: {
+  weekProgressNote: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
-    marginTop: 2,
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
   },
   awakeRow: {flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm},
   awakePicker: {flex: 1, alignItems: 'center', gap: theme.spacing.xs},

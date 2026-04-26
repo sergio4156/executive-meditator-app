@@ -25,6 +25,20 @@ const INTERVAL_BY_WEEK: Record<number, number> = {
   3: 15,
 };
 
+const DAY_MS = 86_400_000;
+
+/**
+ * Auto-progression — week is derived from paid_at, not from a stored column.
+ * Days 0–6 → week 1 (60 min), 7–13 → week 2 (30 min), 14+ → week 3 (15 min).
+ */
+function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
+  if (!paidAt) return 1;
+  const days = (Date.now() - new Date(paidAt).getTime()) / DAY_MS;
+  if (days < 7) return 1;
+  if (days < 14) return 2;
+  return 3;
+}
+
 const MESSAGES = [
   'Pause for 10 seconds of open awareness.',
   'Eyes slightly up-right. Hold joyful anticipation.',
@@ -46,12 +60,13 @@ serve(async (_req) => {
     const now = new Date();
     const utcMinutesOfDay = now.getUTCHours() * 60 + now.getUTCMinutes();
 
-    // Fetch all users who have a registered device
+    // Fetch all paid users who have a registered device
     const {data: profiles, error} = await supabase
       .from('profiles')
       .select(
-        'user_id, onesignal_player_id, current_week, awake_start, awake_end, utc_offset_minutes',
+        'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes',
       )
+      .eq('is_paid', true)
       .not('onesignal_player_id', 'is', null);
 
     if (error) throw error;
@@ -69,8 +84,9 @@ serve(async (_req) => {
         continue;
       }
 
-      // Check if it's on the interval (within a 1-minute tolerance)
-      const intervalMinutes = INTERVAL_BY_WEEK[profile.current_week] ?? 60;
+      // Auto-progress through weeks based on time since payment.
+      const week = deriveWeek(profile.paid_at);
+      const intervalMinutes = INTERVAL_BY_WEEK[week] ?? 60;
       if (localMinutes % intervalMinutes !== 0) continue;
 
       playerIds.push(profile.onesignal_player_id);

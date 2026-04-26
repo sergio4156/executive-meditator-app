@@ -8,7 +8,7 @@ export const WEEK_CONFIG: Record<1 | 2 | 3, WeekConfig> = {
   1: {
     week: 1,
     intervalMinutes: 60,
-    description: '10-second meditation every hour',
+    description: '10-second meditation at the top of every hour',
   },
   2: {
     week: 2,

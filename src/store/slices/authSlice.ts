@@ -16,6 +16,7 @@ interface AuthState {
   error: string | null;
   isPaid: boolean;
   isPaidLoading: boolean;
+  paidAt: string | null;
 }
 
 const initialState: AuthState = {
@@ -24,6 +25,7 @@ const initialState: AuthState = {
   error: null,
   isPaid: false,
   isPaidLoading: false,
+  paidAt: null,
 };
 
 const authSlice = createSlice({
@@ -32,7 +34,6 @@ const authSlice = createSlice({
   reducers: {
     setUser(state, action: PayloadAction<AuthUser | null>) {
       state.user = action.payload;
-      state.loading = false;
       state.error = null;
     },
     setLoading(state, action: PayloadAction<boolean>) {
@@ -52,8 +53,11 @@ const authSlice = createSlice({
     setIsPaidLoading(state, action: PayloadAction<boolean>) {
       state.isPaidLoading = action.payload;
     },
+    setPaidAt(state, action: PayloadAction<string | null>) {
+      state.paidAt = action.payload;
+    },
   },
 });
 
-export const {setUser, setLoading, setAuthError, clearError, setIsPaid, setIsPaidLoading} = authSlice.actions;
+export const {setUser, setLoading, setAuthError, clearError, setIsPaid, setIsPaidLoading, setPaidAt} = authSlice.actions;
 export default authSlice.reducer;
