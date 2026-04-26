@@ -79,11 +79,13 @@ export default function SetupPage() {
               Check Your Email
             </h1>
             <p className="font-sans text-cream-200 text-sm leading-relaxed opacity-80">
-              We sent a confirmation link to <span className="text-gold-400">{email}</span>.
-              Please verify your email to complete your account setup.
+              If <span className="text-gold-400">{email}</span> is a new account,
+              we just sent a confirmation link. Please verify your email to
+              complete setup and continue to checkout.
             </p>
-            <p className="font-sans text-cream-200 text-xs leading-relaxed opacity-50 mt-4">
-              Once verified, you will be directed to complete your investment in the Executive tier.
+            <p className="font-sans text-cream-200 text-xs leading-relaxed opacity-60 mt-5 pt-5 border-t border-navy-800">
+              Already have an account with this email? Open the app and sign in
+              with your existing password — no new email needed.
             </p>
           </div>
           <Link
