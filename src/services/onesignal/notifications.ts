@@ -68,3 +68,20 @@ export async function initializeNotifications() {
     acknowledgeReminder();
   });
 }
+
+/**
+ * Save the current OneSignal player ID for the given user.
+ * Called when auth flips to logged-in, since OneSignal may have registered
+ * before the session existed (fresh install path).
+ */
+export async function syncOneSignalIdForUser(uid: string) {
+  try {
+    const state: any = await OneSignal.getDeviceState();
+    if (state?.userId) {
+      store.dispatch(setFcmToken(state.userId));
+      await saveOneSignalId(uid, state.userId);
+    }
+  } catch (err) {
+    console.warn('syncOneSignalIdForUser failed:', err);
+  }
+}

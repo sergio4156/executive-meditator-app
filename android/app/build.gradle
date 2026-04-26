@@ -81,9 +81,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.executivemeditator"
+    namespace "com.executivemeditator.app"
     defaultConfig {
-        applicationId "com.executivemeditator"
+        applicationId "com.executivemeditator.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

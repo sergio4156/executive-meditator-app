@@ -82,28 +82,39 @@ SUPABASE_SERVICE_ROLE_KEY
 ## Mobile App (React Native)
 
 ### Auth flow
-1. User signs in via `AuthScreen` → calls `supabase.auth.signInWithOtp` (magic link) or `signInAnonymously`.
-2. `useAuth` hook listens to `supabase.auth.onAuthStateChange` and dispatches to `authSlice`.
+1. User signs in via `AuthScreen` → calls `supabase.auth.signInWithPassword(email, password)` (or `signUp` for new accounts). Anonymous sign-in (`signInAnonymously`) is also supported but not currently used by any screen.
+2. The auth state listener in `AppNavigator` (subscribed via `supabase.auth.onAuthStateChange`) dispatches to `authSlice` and triggers `syncOneSignalIdForUser(uid)` to associate the device's OneSignal player ID with the logged-in user.
 3. On first sign-in, the `handle_new_user` database trigger creates a `profiles` row automatically.
 
+> Note: the website uses a different flow — `signInWithOtp` (magic link) — to onboard users via email before they download the app.
+
 ### Notification setup
-On app launch, `useNotifications` hook:
-1. Calls `OneSignal.Notifications.requestPermission`.
-2. Reads the device's OneSignal player ID.
-3. Upserts it into `profiles.onesignal_player_id` via `supabase.from('profiles').update(...)`.
+On app launch, `App.tsx` calls `initializeNotifications()` (defined in `src/services/onesignal/notifications.ts`) which:
+1. Sets the OneSignal app ID (`OneSignal.setAppId`) — the SDK is `react-native-onesignal` v4.5.1.
+2. Triggers the OS notification permission prompt (`promptForPushNotificationsWithUserResponse`).
+3. Reads the device's OneSignal player ID via `getDeviceState()` and saves it to Redux (`notificationSlice.fcmToken`).
+4. If a Supabase session already exists at that moment, upserts the player ID into `profiles.onesignal_player_id`.
+
+Because the player ID save in step 4 is gated on an active session, a fresh-install user (who launches the app *before* logging in) would otherwise never have their player ID saved. To close this race, `syncOneSignalIdForUser(uid)` is also called from the auth state change handler in `AppNavigator` whenever the session flips to logged-in.
 
 From that point, the Edge Function drives all push scheduling — the app itself does not schedule local notifications.
 
-### Meditation session
-`useMeditation` hook manages a countdown timer. On session completion it writes a record to Supabase via `database.ts` and updates Redux state (`meditationSlice`).
+### Meditation experience
+The meditation experience is **passive** — when a push arrives, the user pauses for 10 seconds. The app does not run an in-session countdown timer.
+
+`meditationSlice` tracks:
+- `currentWeek` (1–3) — drives the reminder interval (60 min → 30 min → 15 min)
+- `alarmLevel` (`none` | `subtle` | `mild` | `disease` | `critical`) — escalates if the user misses several consecutive sessions; reset to `none` when the user opens the app or taps a reminder
+
+A foreground heartbeat (`startScheduler` in `src/services/scheduler.ts`) is defined to drive alarm-level escalation, but is currently not wired into app lifecycle. Push delivery itself is unaffected — it is fully driven by the `send-reminders` Edge Function.
 
 ### Redux slices
 
 | Slice | State |
 |---|---|
 | `authSlice` | `user`, `loading`, `error`, `isPaid`, `isPaidLoading` |
-| `meditationSlice` | `currentWeek`, `alarmLevel`, `sessionCount` |
-| `notificationSlice` | `permission`, `playerId` |
+| `meditationSlice` | `currentWeek`, `alarmLevel` |
+| `notificationSlice` | `fcmPermissionGranted`, `fcmToken`, `notifications`, `unreadCount`, `onboardingComplete`, `awakeStart`, `awakeEnd` |
 
 ---
 

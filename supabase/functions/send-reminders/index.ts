@@ -115,10 +115,11 @@ serve(async (_req) => {
     const result = await onesignalRes.json();
     console.log('OneSignal result:', JSON.stringify(result));
 
-    // Fire end-of-meditation notification in background after 10 seconds
-    // (not awaited so the HTTP response returns immediately before pg_net times out)
+    // Fire end-of-meditation notification in background ~20s after reminder
+    // (≈10s perceived on device due to push delivery latency — do not change, calibrated value).
+    // Not awaited so the HTTP response returns immediately before pg_net times out.
     const endMessage = END_MESSAGES[Math.floor(Math.random() * END_MESSAGES.length)];
-    console.log('Scheduling end notification in 10 seconds...');
+    console.log('Scheduling end notification in 20s (≈10s perceived)...');
     const sendEndNotification = new Promise<void>(resolve => {
       setTimeout(async () => {
         console.log('Sending end notification now');

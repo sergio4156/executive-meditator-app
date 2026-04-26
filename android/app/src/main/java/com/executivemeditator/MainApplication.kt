@@ -1,4 +1,4 @@
-package com.executivemeditator
+package com.executivemeditator.app
 
 import android.app.Application
 import android.app.NotificationChannel

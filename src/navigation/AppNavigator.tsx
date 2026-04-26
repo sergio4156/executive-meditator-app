@@ -12,10 +12,11 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import {useAppDispatch, useAppSelector} from '@/store';
-import {setUser, setLoading, setIsPaid, setIsPaidLoading} from '@/store/slices/authSlice';
+import {setUser, setLoading, setIsPaid} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
 import {fetchIsPaid} from '@/services/supabase/database';
+import {syncOneSignalIdForUser} from '@/services/onesignal/notifications';
 import {theme} from '@/theme';
 
 import {HomeScreen} from '@/screens/HomeScreen';
@@ -79,7 +80,7 @@ function MainTabs() {
 
 export function AppNavigator() {
   const dispatch = useAppDispatch();
-  const {user, loading, isPaid, isPaidLoading} = useAppSelector(s => s.auth);
+  const {user, loading, isPaid} = useAppSelector(s => s.auth);
   const onboardingComplete = useAppSelector(s => s.notifications.onboardingComplete);
 
   // Rehydrate onboarding state from AsyncStorage on boot
@@ -93,35 +94,54 @@ export function AppNavigator() {
   }, [dispatch]);
 
   useEffect(() => {
-    // Subscribe to Supabase auth state changes
+    // Backstop: if Supabase auth doesn't emit INITIAL_SESSION within 5s
+    // (cold-start network/storage hangs are real), unblock the UI anyway.
+    const backstopTimeout = setTimeout(() => {
+      dispatch(setLoading(false));
+    }, 5000);
+
     const {data: {subscription}} = onAuthStateChange(async (_event, session) => {
+      clearTimeout(backstopTimeout);
       if (session?.user) {
+        const uid = session.user.id;
         dispatch(
           setUser({
-            uid: session.user.id,
+            uid,
             email: session.user.email ?? null,
             displayName: session.user.user_metadata?.full_name ?? null,
             isAnonymous: session.user.is_anonymous ?? false,
           }),
         );
-        dispatch(setIsPaidLoading(true));
-        try {
-          const paid = await fetchIsPaid(session.user.id);
-          dispatch(setIsPaid(paid));
-        } catch {
-          dispatch(setIsPaid(false));
-        }
+        syncOneSignalIdForUser(uid);
+
+        // Hydrate isPaid from cache so the navigator can render immediately,
+        // then refresh from the backend in the background.
+        const cached = await AsyncStorage.getItem(`isPaid:${uid}`);
+        dispatch(setIsPaid(cached === '1'));
+        dispatch(setLoading(false));
+
+        fetchIsPaid(uid)
+          .then(paid => {
+            dispatch(setIsPaid(paid));
+            AsyncStorage.setItem(`isPaid:${uid}`, paid ? '1' : '0').catch(() => {});
+          })
+          .catch(() => {
+            // Keep cached value on failure
+          });
       } else {
         dispatch(setUser(null));
         dispatch(setIsPaid(false));
+        dispatch(setLoading(false));
       }
-      dispatch(setLoading(false));
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(backstopTimeout);
+      subscription.unsubscribe();
+    };
   }, [dispatch]);
 
-  if (loading || (user && isPaidLoading)) {
+  if (loading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
