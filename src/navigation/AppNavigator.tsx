@@ -140,6 +140,20 @@ export function AppNavigator() {
             // Keep cached values on failure
           });
       } else {
+        // Clear all cached payment-status entries on sign-out so a stale
+        // value never bleeds into the next session.
+        try {
+          const keys = await AsyncStorage.getAllKeys();
+          const toRemove = keys.filter(
+            k => k.startsWith('isPaid:') || k.startsWith('paidAt:'),
+          );
+          if (toRemove.length > 0) {
+            await AsyncStorage.multiRemove(toRemove);
+          }
+        } catch {
+          // Storage cleanup is best-effort; don't block sign-out
+        }
+
         dispatch(setUser(null));
         dispatch(setIsPaid(false));
         dispatch(setPaidAt(null));

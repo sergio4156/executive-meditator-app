@@ -17,7 +17,7 @@ import {
   Image,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {signIn} from '@/services/supabase/auth';
+import {signIn, resetPassword} from '@/services/supabase/auth';
 import {theme} from '@/theme';
 
 export function AuthScreen() {
@@ -38,6 +38,25 @@ export function AuthScreen() {
       Alert.alert('Error', err.message ?? 'Authentication failed.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert(
+        'Enter your email',
+        'Type the email address for your account in the field above, then tap "Forgot password?" again.',
+      );
+      return;
+    }
+    try {
+      await resetPassword(email.trim());
+      Alert.alert(
+        'Check your email',
+        `If an account exists for ${email.trim()}, we sent a link to reset your password.`,
+      );
+    } catch (err: any) {
+      Alert.alert('Error', err.message ?? 'Could not send reset email.');
     }
   };
 
@@ -90,6 +109,13 @@ export function AuthScreen() {
             ) : (
               <Text style={styles.primaryButtonText}>Sign In</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleForgotPassword}
+            style={styles.forgotButton}
+            activeOpacity={0.7}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
 
           <Text style={styles.hint}>
@@ -169,5 +195,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     marginTop: theme.spacing.sm,
+  },
+  forgotButton: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+  },
+  forgotText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
   },
 });

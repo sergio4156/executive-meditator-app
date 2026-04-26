@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -21,6 +22,11 @@ export default function SetupPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please re-enter and try again.');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setError('Please review and accept the Terms of Service and Privacy Policy to continue.');
       return;
     }
 
@@ -244,6 +250,41 @@ export default function SetupPage() {
                 </button>
               </div>
             </div>
+
+            {/* Terms acceptance */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={e => setAgreedToTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 accent-gold-500 cursor-pointer flex-shrink-0"
+                aria-describedby="terms-text"
+              />
+              <span
+                id="terms-text"
+                className="font-sans text-xs text-cream-200 opacity-70 leading-relaxed"
+              >
+                I agree to the{' '}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gold-400 hover:text-gold-300 underline"
+                >
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gold-400 hover:text-gold-300 underline"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
 
             {/* Error */}
             {error && (
