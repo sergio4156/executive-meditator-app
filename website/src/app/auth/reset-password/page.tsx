@@ -15,9 +15,6 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    // The Supabase JS client (with default detectSessionInUrl=true on web)
-    // automatically processes recovery hash fragments and emits a PASSWORD_RECOVERY
-    // auth event. We wait for that event before showing the form.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -26,13 +23,39 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Fallback: check for an existing session on mount in case the event
-    // already fired before this listener was attached.
+    // The mobile app's Supabase client uses the implicit flow, so recovery
+    // emails land here with tokens in the URL hash (#access_token=...).
+    // The website client is PKCE-only and won't auto-process the hash, so we
+    // parse it manually and establish the session.
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash.length > 1) {
+      const params = new URLSearchParams(hash.substring(1));
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (access_token && refresh_token && type === 'recovery') {
+        supabase.auth
+          .setSession({ access_token, refresh_token })
+          .then(({ error }) => {
+            if (error) {
+              setErrorMessage(
+                'This password reset link is invalid or has expired. Please request a new one.',
+              );
+              setStatus('error');
+            } else {
+              setStatus('ready');
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          });
+        return () => subscription.unsubscribe();
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setStatus(prev => (prev === 'verifying' ? 'ready' : prev));
       } else {
-        // Give the URL hash a moment to be processed
         setTimeout(() => {
           setStatus(prev => {
             if (prev === 'verifying') {
