@@ -30,6 +30,10 @@ const DAY_MS = 86_400_000;
 /**
  * Auto-progression — week is derived from paid_at, not from a stored column.
  * Days 0–6 → week 1 (60 min), 7–13 → week 2 (30 min), 14+ → week 3 (15 min).
+ *
+ * Keep in sync with src/utils/weekProgression.ts (mobile-side copy used by
+ * the UI). Deno can't import the mobile module so the logic is duplicated;
+ * boundary tests in __tests__/utils/weekProgression.test.ts pin the behavior.
  */
 function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
   if (!paidAt) return 1;

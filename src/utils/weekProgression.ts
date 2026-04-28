@@ -3,6 +3,10 @@
  * Week 1 = days 0–6 (60-min interval)
  * Week 2 = days 7–13 (30-min interval)
  * Week 3 = day 14+ (15-min interval, permanent)
+ *
+ * Keep in sync with the deriveWeek() copy in
+ * supabase/functions/send-reminders/index.ts — that copy decides actual
+ * push cadence; this copy drives the in-app UI.
  */
 const DAY_MS = 86_400_000;
 
