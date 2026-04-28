@@ -59,6 +59,7 @@ supabase/.temp/
 .next/
 out/
 website/next-env.d.ts
+*.tsbuildinfo
 
 # Testing
 coverage/
