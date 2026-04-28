@@ -8,6 +8,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@reduxjs/toolkit$': '<rootDir>/node_modules/@reduxjs/toolkit/dist/cjs/redux-toolkit.development.cjs',
     '^immer$': '<rootDir>/node_modules/immer/dist/cjs/index.js',
+    '\\.(lottie)$': '<rootDir>/__mocks__/fileMock.js',
   },
   setupFiles: ['./jest.setup.js'],
 };

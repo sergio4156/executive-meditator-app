@@ -48,27 +48,6 @@
     "react-test-renderer": "18.2.0",
     "typescript": "5.0.4"
   },
-  "jest": {
-    "preset": "react-native",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-onesignal|lottie-react-native|react-native-reanimated|react-native-vector-icons|react-native-url-polyfill)/)"
-    ],
-    "setupFiles": [
-      "./jest.setup.js"
-    ],
-    "moduleNameMapper": {
-      "\\.(lottie)$": "<rootDir>/__mocks__/fileMock.js",
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  },
   "engines": {
     "node": ">=18"
   }
