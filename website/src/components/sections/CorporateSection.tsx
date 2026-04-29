@@ -327,10 +327,14 @@ export default function CorporateSection() {
 
                 {/* Number of Licenses */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label
+                    htmlFor="licenses"
+                    className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2"
+                  >
                     Number of Licenses <span className="text-gold-600">*</span>
                   </label>
                   <select
+                    id="licenses"
                     name="licenses"
                     value={form.licenses}
                     onChange={handleChange}

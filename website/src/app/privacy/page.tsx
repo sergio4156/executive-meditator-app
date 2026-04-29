@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-navy-950 px-6 py-16">
+    <main className="min-h-screen bg-navy-950 px-6 py-16">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-12">
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                 Questions about this policy may be directed to{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com"
-                  className="text-gold-400 hover:text-gold-300"
+                  className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
                 personal data at any time by emailing{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com?subject=Delete%20My%20Account"
-                  className="text-gold-400 hover:text-gold-300"
+                  className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>{' '}
@@ -204,7 +204,7 @@ export default function PrivacyPage() {
                 contact us at{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com"
-                  className="text-gold-400 hover:text-gold-300"
+                  className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>
@@ -224,6 +224,6 @@ export default function PrivacyPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

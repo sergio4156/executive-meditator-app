@@ -64,7 +64,7 @@ export default function SetupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center px-4 py-16">
+      <main className="min-h-screen bg-navy-950 flex flex-col items-center justify-center px-4 py-16">
         <div className="w-full max-w-md text-center">
           <span className="font-serif text-2xl text-white tracking-widest">
             The Executive <span className="text-gold-500">Meditator</span>
@@ -95,12 +95,12 @@ export default function SetupPage() {
             ← Return to Home
           </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center px-4 py-16">
+    <main className="min-h-screen bg-navy-950 flex flex-col items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         {/* Back link */}
         <Link
@@ -316,6 +316,6 @@ export default function SetupPage() {
           &copy; {new Date().getFullYear()} The Executive Meditator. All rights reserved.
         </p>
       </div>
-    </div>
+    </main>
   );
 }

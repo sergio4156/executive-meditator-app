@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-navy-950 px-6 py-16">
+    <main className="min-h-screen bg-navy-950 px-6 py-16">
       <div className="max-w-3xl mx-auto">
         <div className="mb-12">
           <Link
@@ -44,7 +44,7 @@ export default function TermsPage() {
               <p>
                 By creating an account or using The Executive Meditator (the &quot;Service&quot;), you
                 agree to these Terms of Service and our{' '}
-                <Link href="/privacy" className="text-gold-400 hover:text-gold-300">
+                <Link href="/privacy" className="text-gold-400 hover:text-gold-300 underline">
                   Privacy Policy
                 </Link>
                 . If you do not agree, do not use the Service.
@@ -146,7 +146,7 @@ export default function TermsPage() {
                 Questions about these Terms may be directed to{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com"
-                  className="text-gold-400 hover:text-gold-300"
+                  className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>
@@ -165,6 +165,6 @@ export default function TermsPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

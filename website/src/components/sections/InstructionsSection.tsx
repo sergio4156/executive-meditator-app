@@ -200,6 +200,7 @@ export default function InstructionsSection() {
                       {/* Circle node */}
                       <div className="flex-shrink-0 flex flex-col items-center">
                         <div
+                          role="img"
                           aria-label={`Week ${i + 1}`}
                           className={`w-10 h-10 rounded-full ${week.color} flex items-center justify-center`}
                         >
