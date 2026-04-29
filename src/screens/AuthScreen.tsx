@@ -11,11 +11,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ActivityIndicator,
   Alert,
   Image,
 } from 'react-native';
+
+const SUPPORT_MAILTO =
+  'mailto:hillisoralee@gmail.com?subject=Help%20signing%20in';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {signIn, resetPassword} from '@/services/supabase/auth';
 import {theme} from '@/theme';
@@ -122,6 +126,13 @@ export function AuthScreen() {
             Purchase access at executivemeditator.com first, then sign in here
             with the same email and password.
           </Text>
+
+          <TouchableOpacity
+            onPress={() => Linking.openURL(SUPPORT_MAILTO)}
+            style={styles.supportButton}
+            activeOpacity={0.7}>
+            <Text style={styles.supportText}>Need help? Contact support</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -205,5 +216,15 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  supportButton: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+  },
+  supportText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    textDecorationLine: 'underline',
   },
 });

@@ -17,6 +17,8 @@ import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
 const WEBSITE_URL = 'https://executivemeditator.com/#pricing';
+const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
+const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Help%20with%20my%20account`;
 
 export function PaywallScreen() {
   return (
@@ -46,6 +48,15 @@ export function PaywallScreen() {
             <Text style={styles.buttonText}>Get Access</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.supportLink}
+          onPress={() => Linking.openURL(SUPPORT_MAILTO)}
+          activeOpacity={0.7}>
+          <Text style={styles.supportText}>
+            Already paid but stuck here? Contact support
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.signOutButton}
@@ -131,12 +142,21 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   signOutButton: {
-    marginTop: 24,
+    marginTop: 16,
   },
   signOutText: {
     fontFamily: theme.typography.fontFamily.sans,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
     opacity: 0.6,
+  },
+  supportLink: {
+    marginTop: 24,
+  },
+  supportText: {
+    fontFamily: theme.typography.fontFamily.sans,
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
   },
 });

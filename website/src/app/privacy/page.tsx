@@ -129,19 +129,31 @@ export default function PrivacyPage() {
 
             <section>
               <h2 className="font-serif text-xl text-white font-light mb-3">
-                5. Data Retention
+                5. Account Deletion and Data Retention
               </h2>
               <p>
-                We retain your account data for as long as your account is
-                active. If you wish to delete your account and all associated
-                data, contact us at{' '}
+                You may request deletion of your account and all associated
+                personal data at any time by emailing{' '}
                 <a
-                  href="mailto:hillisoralee@gmail.com"
+                  href="mailto:hillisoralee@gmail.com?subject=Delete%20My%20Account"
                   className="text-gold-400 hover:text-gold-300"
                 >
                   hillisoralee@gmail.com
                 </a>{' '}
-                and we will process your request within 30 days.
+                with the subject line "Delete My Account" from the email
+                address registered to your account. We will confirm and
+                process your request within 30 days.
+              </p>
+              <p className="mt-3">
+                Upon deletion, we permanently remove your authentication
+                record, profile (including reminder schedule and timezone),
+                meditation logs, and push-notification subscription. We may
+                retain a record of completed transactions (purchase date,
+                amount, last four digits of payment method) for the period
+                required by tax and accounting law, and we may retain
+                anonymized usage statistics that cannot be linked back to
+                you. We retain active accounts for as long as the account
+                remains active.
               </p>
             </section>
 
