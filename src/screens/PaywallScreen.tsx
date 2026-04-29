@@ -52,7 +52,9 @@ export function PaywallScreen() {
         <TouchableOpacity
           style={styles.supportLink}
           onPress={() => Linking.openURL(SUPPORT_MAILTO)}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+          accessibilityRole="link"
+          accessibilityLabel="Already paid but stuck here? Contact support by email">
           <Text style={styles.supportText}>
             Already paid but stuck here? Contact support
           </Text>

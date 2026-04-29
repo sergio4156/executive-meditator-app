@@ -142,6 +142,12 @@ export function SettingsScreen() {
                 value={loopEnabled}
                 onValueChange={handleToggleLoop}
                 trackColor={{false: theme.colors.border, true: theme.colors.primary}}
+                accessibilityLabel="Continue indefinite loop"
+                accessibilityHint={
+                  loopEnabled
+                    ? 'Reminders will keep cycling. Toggle off to pause them.'
+                    : 'Reminders are paused. Toggle on to resume the cycle.'
+                }
               />
             </View>
           )}

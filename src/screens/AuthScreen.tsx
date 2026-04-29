@@ -130,7 +130,9 @@ export function AuthScreen() {
           <TouchableOpacity
             onPress={() => Linking.openURL(SUPPORT_MAILTO)}
             style={styles.supportButton}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Need help signing in? Contact support by email">
             <Text style={styles.supportText}>Need help? Contact support</Text>
           </TouchableOpacity>
         </View>

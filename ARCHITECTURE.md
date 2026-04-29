@@ -31,14 +31,16 @@ One row per user. Created automatically via trigger when a user signs up.
 |---|---|---|
 | `user_id` | uuid PK | References `auth.users` |
 | `onesignal_player_id` | text | Device ID for push targeting |
-| `current_week` | smallint 1–3 | Which week of the program the user is on |
+| `current_week` | smallint 1–3 | Legacy column. Was the source of truth for cadence; now informational only. The Edge Function derives week live from `paid_at` via `deriveWeek()` (see migration `003_add_loop_enabled.sql` era). |
 | `awake_start` | smallint 0–23 | Local hour reminders start |
 | `awake_end` | smallint 0–23 | Local hour reminders stop |
-| `utc_offset_minutes` | integer | User's timezone offset from UTC |
+| `utc_offset_minutes` | integer | Cached timezone offset from UTC. Used as fallback when `time_zone` is null. |
+| `time_zone` | text | IANA tz identifier (e.g. `America/Los_Angeles`). Preferred over `utc_offset_minutes` for DST-aware scheduling. |
+| `loop_enabled` | boolean default true | Whether the indefinite 21-day reminder loop continues past the first cycle. False = reminders paused. |
 | `email` | text | Stored at payment time |
 | `is_paid` | boolean | Set to true by Stripe webhook |
 | `stripe_session_id` | text | Stripe checkout session ID |
-| `paid_at` | timestamptz | Timestamp of successful payment |
+| `paid_at` | timestamptz | Timestamp of successful payment. **Source of truth for the program week** — see `deriveWeek` in `src/utils/weekProgression.ts`. |
 
 Row-Level Security is enabled — users can only read/write their own row. The Edge Function bypasses RLS using the service role key.
 
@@ -52,6 +54,8 @@ Run these in order if upgrading an existing schema:
 supabase/schema.sql                     ← full schema (fresh installs)
 supabase/migrations/001_add_schedule_fields.sql
 supabase/migrations/002_add_payment_fields.sql
+supabase/migrations/003_add_loop_enabled.sql
+supabase/migrations/004_add_time_zone.sql
 ```
 
 ---
@@ -61,12 +65,13 @@ supabase/migrations/002_add_payment_fields.sql
 **Trigger:** Supabase Cron, every 15 minutes.
 
 **What it does:**
-1. Fetches all `profiles` rows where `onesignal_player_id` is not null.
-2. For each user, converts the current UTC time to their local time using `utc_offset_minutes`.
-3. Skips users outside their `awake_start`/`awake_end` window.
-4. Checks whether `localMinutes % intervalMinutes === 0`, where the interval is determined by `current_week` (week 1 = 60 min, week 2 = 30 min, week 3 = 15 min).
-5. Sends a push notification to all due devices via OneSignal's REST API (silent tone, vibration only).
-6. Schedules a second "meditation complete" notification 20 seconds later using `EdgeRuntime.waitUntil` so the HTTP response returns before Deno's timeout.
+1. Fetches all paid `profiles` rows where `onesignal_player_id` is not null. Includes `paid_at`, `loop_enabled`, `time_zone`, and `utc_offset_minutes`.
+2. Skips users with `loop_enabled = false` (opted out of the indefinite loop).
+3. Converts the current UTC time to each user's local time using `time_zone` via `Intl.DateTimeFormat` (DST-aware). Falls back to the cached `utc_offset_minutes` if `time_zone` is null.
+4. Skips users outside their `awake_start`/`awake_end` window.
+5. Derives the user's program week from `paid_at` via a 21-day modulo loop: days 0–6 = week 1 (60-min interval), 7–13 = week 2 (30-min), 14–20 = week 3 (15-min), then wraps. Source of truth for the cadence.
+6. Checks whether `localMinutes % intervalMinutes === 0`. Sends a push to all due devices via OneSignal's REST API (silent tone, vibration only).
+7. Schedules a second "meditation complete" notification 20 seconds later using `EdgeRuntime.waitUntil` so the HTTP response returns before Deno's timeout.
 
 **Required secrets** (set in Supabase Dashboard → Settings → Edge Functions):
 
@@ -103,8 +108,12 @@ From that point, the Edge Function drives all push scheduling — the app itself
 The meditation experience is **passive** — when a push arrives, the user pauses for 10 seconds. The app does not run an in-session countdown timer.
 
 `meditationSlice` tracks:
-- `currentWeek` (1–3) — drives the reminder interval (60 min → 30 min → 15 min)
+- `currentWeek` (1–3) — derived live from `paid_at` via `deriveWeek()` ([src/utils/weekProgression.ts](src/utils/weekProgression.ts)) and dispatched on auth events. Drives the in-app UI ("Week 2 of 3"); the Edge Function recomputes it independently for cadence decisions.
 - `alarmLevel` (`none` | `subtle` | `mild` | `disease` | `critical`) — escalates if the user misses several consecutive sessions; reset to `none` when the user opens the app or taps a reminder
+
+The program loops indefinitely in 21-day cycles (week 1 → 2 → 3 → 1 → …). After the first cycle completes (`isFirstCycleComplete(paidAt)` returns true at day 21+), the Settings screen renders a toggle that lets the user stop or resume the loop by writing to `profiles.loop_enabled`.
+
+Timezone is auto-synced. `getDeviceTimeZone()` (in [src/utils/timezone.ts](src/utils/timezone.ts)) is called on sign-in and on every `AppState 'active'` event; if the device's IANA tz no longer matches the DB, `syncTimeZoneIfChanged(uid)` updates the row. This handles travelers and silent DST transitions without requiring manual Settings changes.
 
 A foreground heartbeat (`startScheduler` in `src/services/scheduler.ts`) is defined to drive alarm-level escalation, but is currently not wired into app lifecycle. Push delivery itself is unaffected — it is fully driven by the `send-reminders` Edge Function.
 
