@@ -24,6 +24,7 @@ import {Card} from '@/components/Card';
 import {theme} from '@/theme';
 import {WEEK_CONFIG} from '@/utils/meditation';
 import {daysUntilNextWeek, isFirstCycleComplete} from '@/utils/weekProgression';
+import {getDeviceTimeZone} from '@/utils/timezone';
 
 function fmtHour(h: number) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -207,6 +208,9 @@ export function SettingsScreen() {
               </View>
             </View>
           </View>
+          <Text style={styles.tzNote}>
+            Timezone: {getDeviceTimeZone()} (auto-detected)
+          </Text>
         </Card>
 
         {/* Notifications */}
@@ -365,6 +369,12 @@ const styles = StyleSheet.create({
   notifNote: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
+  },
+  tzNote: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.sm,
+    fontStyle: 'italic',
   },
   aboutText: {fontSize: theme.typography.fontSize.sm, color: theme.colors.textSecondary},
   signOutButton: {
