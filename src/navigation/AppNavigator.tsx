@@ -5,7 +5,7 @@
  * Authenticated   → MainTabs (Home, Dashboard, Notifications, Settings)
  */
 import React, {useEffect} from 'react';
-import {ActivityIndicator, View, StyleSheet, Text, Image} from 'react-native';
+import {ActivityIndicator, AppState, View, StyleSheet, Text, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -15,7 +15,7 @@ import {useAppDispatch, useAppSelector} from '@/store';
 import {setUser, setLoading, setIsPaid, setPaidAt, setLoopEnabled} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
-import {fetchPaymentStatus} from '@/services/supabase/database';
+import {fetchPaymentStatus, syncTimeZoneIfChanged} from '@/services/supabase/database';
 import {syncOneSignalIdForUser} from '@/services/onesignal/notifications';
 import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {deriveWeek} from '@/utils/weekProgression';
@@ -140,6 +140,11 @@ export function AppNavigator() {
           .catch(() => {
             // Keep cached values on failure
           });
+
+        // Re-align reminder timing to the current device tz on every sign-in.
+        syncTimeZoneIfChanged(uid).catch(() => {
+          // Best-effort; the existing utc_offset_minutes still works as a fallback.
+        });
       } else {
         // Clear all cached payment-status entries on sign-out so a stale
         // value never bleeds into the next session.
@@ -167,6 +172,19 @@ export function AppNavigator() {
       subscription.unsubscribe();
     };
   }, [dispatch]);
+
+  // Re-sync the user's tz whenever the app comes back to the foreground —
+  // catches travelers who fly across time zones without restarting the app.
+  const uid = user?.uid;
+  useEffect(() => {
+    if (!uid) return;
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        syncTimeZoneIfChanged(uid).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [uid]);
 
   if (loading) {
     return (

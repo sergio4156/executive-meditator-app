@@ -52,6 +52,31 @@ function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
   return 3;
 }
 
+/**
+ * Local hour/minute in an IANA tz at the given moment.
+ *
+ * Keep in sync with src/utils/timezone.ts (mobile copy). Deno's
+ * Intl.DateTimeFormat behaves identically — boundary tests in
+ * __tests__/utils/timezone.test.ts pin the cross-DST behavior.
+ */
+function getLocalHourMinute(
+  date: Date,
+  timeZone: string,
+): {hour: number; minute: number} {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(date);
+  const hourPart = parts.find(p => p.type === 'hour')?.value ?? '0';
+  const minutePart = parts.find(p => p.type === 'minute')?.value ?? '0';
+  const hour = parseInt(hourPart, 10) % 24;
+  const minute = parseInt(minutePart, 10);
+  return {hour, minute};
+}
+
 const MESSAGES = [
   'Pause for 10 seconds of open awareness.',
   'Eyes slightly up-right. Hold joyful anticipation.',
@@ -77,7 +102,7 @@ serve(async (_req) => {
     const {data: profiles, error} = await supabase
       .from('profiles')
       .select(
-        'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes, loop_enabled',
+        'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes, time_zone, loop_enabled',
       )
       .eq('is_paid', true)
       .not('onesignal_player_id', 'is', null);
@@ -90,10 +115,26 @@ serve(async (_req) => {
       // User opted out of the indefinite loop after their first 21-day cycle.
       if (profile.loop_enabled === false) continue;
 
-      // Convert UTC time to user's local time
-      const localMinutes =
-        (utcMinutesOfDay + profile.utc_offset_minutes + 1440) % 1440;
-      const localHour = Math.floor(localMinutes / 60);
+      // Convert UTC time to user's local time. Prefer the IANA tz
+      // (DST-aware); fall back to the cached offset for legacy users
+      // who haven't yet had time_zone populated.
+      let localHour: number;
+      let localMinutes: number;
+      if (profile.time_zone) {
+        try {
+          const {hour, minute} = getLocalHourMinute(now, profile.time_zone);
+          localHour = hour;
+          localMinutes = hour * 60 + minute;
+        } catch {
+          localMinutes =
+            (utcMinutesOfDay + profile.utc_offset_minutes + 1440) % 1440;
+          localHour = Math.floor(localMinutes / 60);
+        }
+      } else {
+        localMinutes =
+          (utcMinutesOfDay + profile.utc_offset_minutes + 1440) % 1440;
+        localHour = Math.floor(localMinutes / 60);
+      }
 
       // Skip if outside awake window
       if (localHour < profile.awake_start || localHour >= profile.awake_end) {

@@ -1,4 +1,5 @@
 import {supabase, TABLES} from '@/config/supabase';
+import {getDeviceTimeZone} from '@/utils/timezone';
 
 export async function saveOneSignalId(uid: string, playerId: string) {
   const {error} = await supabase
@@ -57,7 +58,36 @@ export async function syncUserSchedule(
       awake_start: awakeStart,
       awake_end: awakeEnd,
       utc_offset_minutes: utcOffsetMinutes,
+      time_zone: getDeviceTimeZone(),
       updated_at: new Date().toISOString(),
     });
+  if (error) throw error;
+}
+
+/**
+ * Lightweight tz refresh — only updates time_zone (and the cached offset)
+ * when the device's current tz no longer matches what we have in the DB.
+ * Called on app foreground so a traveling user's reminders re-align to
+ * the new local time without waiting for them to touch Settings.
+ */
+export async function syncTimeZoneIfChanged(uid: string) {
+  const deviceTz = getDeviceTimeZone();
+  const {data, error: fetchErr} = await supabase
+    .from(TABLES.PROFILES)
+    .select('time_zone')
+    .eq('user_id', uid)
+    .single();
+  if (fetchErr) throw fetchErr;
+  if (data?.time_zone === deviceTz) return;
+
+  const utcOffsetMinutes = -(new Date().getTimezoneOffset());
+  const {error} = await supabase
+    .from(TABLES.PROFILES)
+    .update({
+      time_zone: deviceTz,
+      utc_offset_minutes: utcOffsetMinutes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', uid);
   if (error) throw error;
 }
