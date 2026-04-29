@@ -7,6 +7,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Switch,
   TouchableOpacity,
   Alert,
 } from 'react-native';
@@ -15,13 +16,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {useAppDispatch, useAppSelector} from '@/store';
 import {completeOnboarding, resetOnboarding} from '@/store/slices/notificationSlice';
+import {setLoopEnabled} from '@/store/slices/authSlice';
 import {signOut} from '@/services/supabase/auth';
-import {syncUserSchedule} from '@/services/supabase/database';
+import {syncUserSchedule, updateLoopEnabled} from '@/services/supabase/database';
 import {supabase} from '@/config/supabase';
 import {Card} from '@/components/Card';
 import {theme} from '@/theme';
 import {WEEK_CONFIG} from '@/utils/meditation';
-import {daysUntilNextWeek} from '@/utils/weekProgression';
+import {daysUntilNextWeek, isFirstCycleComplete} from '@/utils/weekProgression';
 
 function fmtHour(h: number) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -31,15 +33,31 @@ function fmtHour(h: number) {
 
 export function SettingsScreen() {
   const dispatch = useAppDispatch();
-  const {user, paidAt} = useAppSelector(s => s.auth);
+  const {user, paidAt, loopEnabled} = useAppSelector(s => s.auth);
   const {currentWeek} = useAppSelector(s => s.meditation);
   const daysToNext = daysUntilNextWeek(paidAt);
+  const cycleComplete = isFirstCycleComplete(paidAt);
   const {fcmPermissionGranted, awakeStart, awakeEnd} = useAppSelector(
     s => s.notifications,
   );
 
   const [localAwakeStart, setLocalAwakeStart] = useState(awakeStart);
   const [localAwakeEnd, setLocalAwakeEnd] = useState(awakeEnd);
+
+  const handleToggleLoop = async (next: boolean) => {
+    dispatch(setLoopEnabled(next));
+    if (!user?.uid) return;
+    try {
+      await updateLoopEnabled(user.uid, next);
+    } catch (err) {
+      // Roll back optimistic update on failure
+      dispatch(setLoopEnabled(!next));
+      Alert.alert(
+        'Could not save',
+        'Your reminder preference could not be updated. Please check your connection and try again.',
+      );
+    }
+  };
 
   const syncSchedule = async (
     week: 1 | 2 | 3,
@@ -104,10 +122,28 @@ export function SettingsScreen() {
             {WEEK_CONFIG[currentWeek].description}
           </Text>
           <Text style={styles.weekProgressNote}>
-            {daysToNext == null
-              ? 'You have reached the final week. Reminders continue every 15 minutes.'
+            {currentWeek === 3
+              ? `Cycle restarts in ${daysToNext} day${daysToNext === 1 ? '' : 's'}. Reminders return to weekly cadence.`
               : `Week ${currentWeek + 1} begins in ${daysToNext} day${daysToNext === 1 ? '' : 's'}. Your program advances automatically.`}
           </Text>
+
+          {cycleComplete && (
+            <View style={styles.loopToggleRow}>
+              <View style={styles.loopToggleText}>
+                <Text style={styles.notifLabel}>Continue indefinite loop</Text>
+                <Text style={styles.notifHint}>
+                  {loopEnabled
+                    ? 'Reminders will keep cycling 60 → 30 → 15 min every 21 days.'
+                    : 'Reminders are paused. Toggle on to resume the cycle.'}
+                </Text>
+              </View>
+              <Switch
+                value={loopEnabled}
+                onValueChange={handleToggleLoop}
+                trackColor={{false: theme.colors.border, true: theme.colors.primary}}
+              />
+            </View>
+          )}
         </Card>
 
         {/* Awake window */}
@@ -265,6 +301,16 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
     fontStyle: 'italic',
   },
+  loopToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+  },
+  loopToggleText: {flex: 1, gap: 2},
   awakeRow: {flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm},
   awakePicker: {flex: 1, alignItems: 'center', gap: theme.spacing.xs},
   awakeLabel: {

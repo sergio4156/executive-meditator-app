@@ -13,14 +13,26 @@ export async function saveOneSignalId(uid: string, playerId: string) {
 
 export async function fetchPaymentStatus(
   uid: string,
-): Promise<{isPaid: boolean; paidAt: string | null}> {
+): Promise<{isPaid: boolean; paidAt: string | null; loopEnabled: boolean}> {
   const {data, error} = await supabase
     .from(TABLES.PROFILES)
-    .select('is_paid, paid_at')
+    .select('is_paid, paid_at, loop_enabled')
     .eq('user_id', uid)
     .single();
   if (error) throw error;
-  return {isPaid: data?.is_paid === true, paidAt: data?.paid_at ?? null};
+  return {
+    isPaid: data?.is_paid === true,
+    paidAt: data?.paid_at ?? null,
+    loopEnabled: data?.loop_enabled !== false,
+  };
+}
+
+export async function updateLoopEnabled(uid: string, enabled: boolean) {
+  const {error} = await supabase
+    .from(TABLES.PROFILES)
+    .update({loop_enabled: enabled, updated_at: new Date().toISOString()})
+    .eq('user_id', uid);
+  if (error) throw error;
 }
 
 /** @deprecated use fetchPaymentStatus instead */

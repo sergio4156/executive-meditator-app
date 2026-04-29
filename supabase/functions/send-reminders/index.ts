@@ -26,10 +26,17 @@ const INTERVAL_BY_WEEK: Record<number, number> = {
 };
 
 const DAY_MS = 86_400_000;
+const CYCLE_DAYS = 21;
 
 /**
- * Auto-progression — week is derived from paid_at, not from a stored column.
- * Days 0–6 → week 1 (60 min), 7–13 → week 2 (30 min), 14+ → week 3 (15 min).
+ * Auto-progression — week is derived from paid_at via a 21-day modulo loop.
+ *   Days 0–6  → week 1 (60 min)
+ *   Days 7–13 → week 2 (30 min)
+ *   Days 14–20 → week 3 (15 min)
+ *   Day 21+   → cycles back to week 1, indefinitely.
+ *
+ * Whether the loop continues past the first cycle is gated by the caller
+ * via the `loop_enabled` profile column — this function just does the math.
  *
  * Keep in sync with src/utils/weekProgression.ts (mobile-side copy used by
  * the UI). Deno can't import the mobile module so the logic is duplicated;
@@ -37,9 +44,11 @@ const DAY_MS = 86_400_000;
  */
 function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
   if (!paidAt) return 1;
-  const days = (Date.now() - new Date(paidAt).getTime()) / DAY_MS;
-  if (days < 7) return 1;
-  if (days < 14) return 2;
+  const rawDays = (Date.now() - new Date(paidAt).getTime()) / DAY_MS;
+  // Clock skew (paidAt in future) → treat as day 0, not "end of last cycle".
+  const d = rawDays < 0 ? 0 : rawDays % CYCLE_DAYS;
+  if (d < 7) return 1;
+  if (d < 14) return 2;
   return 3;
 }
 
@@ -68,7 +77,7 @@ serve(async (_req) => {
     const {data: profiles, error} = await supabase
       .from('profiles')
       .select(
-        'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes',
+        'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes, loop_enabled',
       )
       .eq('is_paid', true)
       .not('onesignal_player_id', 'is', null);
@@ -78,6 +87,9 @@ serve(async (_req) => {
     const playerIds: string[] = [];
 
     for (const profile of profiles ?? []) {
+      // User opted out of the indefinite loop after their first 21-day cycle.
+      if (profile.loop_enabled === false) continue;
+
       // Convert UTC time to user's local time
       const localMinutes =
         (utcMinutesOfDay + profile.utc_offset_minutes + 1440) % 1440;

@@ -12,7 +12,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import {useAppDispatch, useAppSelector} from '@/store';
-import {setUser, setLoading, setIsPaid, setPaidAt} from '@/store/slices/authSlice';
+import {setUser, setLoading, setIsPaid, setPaidAt, setLoopEnabled} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
 import {fetchPaymentStatus} from '@/services/supabase/database';
@@ -129,9 +129,10 @@ export function AppNavigator() {
         dispatch(setLoading(false));
 
         fetchPaymentStatus(uid)
-          .then(({isPaid, paidAt}) => {
+          .then(({isPaid, paidAt, loopEnabled}) => {
             dispatch(setIsPaid(isPaid));
             dispatch(setPaidAt(paidAt));
+            dispatch(setLoopEnabled(loopEnabled));
             dispatch(setCurrentWeek(deriveWeek(paidAt)));
             AsyncStorage.setItem(`isPaid:${uid}`, isPaid ? '1' : '0').catch(() => {});
             AsyncStorage.setItem(`paidAt:${uid}`, paidAt ?? '').catch(() => {});
