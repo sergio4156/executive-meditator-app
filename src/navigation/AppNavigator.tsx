@@ -6,6 +6,7 @@
  */
 import React, {useEffect} from 'react';
 import {ActivityIndicator, AppState, View, StyleSheet, Text, Image} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -49,12 +50,16 @@ const TAB_ICONS: Record<string, string> = {
 
 function MainTabs() {
   const unreadCount = useAppSelector(s => s.notifications.unreadCount);
+  const insets = useSafeAreaInsets();
 
   return (
     <MainTab.Navigator
       screenOptions={({route}) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {height: 60 + insets.bottom, paddingBottom: 8 + insets.bottom},
+        ],
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
