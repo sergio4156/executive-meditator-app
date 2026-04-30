@@ -133,6 +133,21 @@ export default function Footer() {
           <p className="font-sans text-xs text-cream-200 opacity-40">
             &copy; {year} The Executive Meditator. All rights reserved.
           </p>
+          <div className="flex items-center gap-4 font-sans text-xs">
+            <Link
+              href="/privacy"
+              className="text-cream-200 opacity-60 hover:opacity-100 hover:text-gold-400 transition-all duration-200"
+            >
+              Privacy
+            </Link>
+            <span className="text-cream-200 opacity-30">&middot;</span>
+            <Link
+              href="/terms"
+              className="text-cream-200 opacity-60 hover:opacity-100 hover:text-gold-400 transition-all duration-200"
+            >
+              Terms
+            </Link>
+          </div>
           <p className="font-sans text-xs text-cream-200 opacity-40 italic font-serif">
             Designed for the executive mind.
           </p>
