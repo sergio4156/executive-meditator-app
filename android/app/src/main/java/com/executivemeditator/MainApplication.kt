@@ -14,6 +14,7 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
+import com.onesignal.OneSignal
 
 class MainApplication : Application(), ReactApplication {
 
@@ -39,6 +40,10 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     SoLoader.init(this, false)
+    // Set OneSignal Context at native Application init so NotificationPermissionController's
+    // static initializer can read targetSdk before any JS code calls promptForPushNotifications.
+    // Without this, fresh Play installs crash on first launch (NPE in OSUtils.getTargetSdkVersion).
+    OneSignal.initWithContext(this)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       load()
