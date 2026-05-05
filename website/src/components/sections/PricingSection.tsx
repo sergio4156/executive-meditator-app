@@ -274,6 +274,26 @@ export default function PricingSection() {
           The investment decreases as it cascades through your organization —
           because peace benefits everyone.
         </motion.p>
+
+        {/* Practice disclaimer */}
+        <motion.div
+          custom={0.6}
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          variants={fadeUp}
+          className="mt-16 max-w-2xl mx-auto border-t border-navy-950/10 pt-10"
+        >
+          <p className="font-sans text-xs text-gold-600 uppercase tracking-widest mb-4 text-center">
+            A Note on Practice
+          </p>
+          <p className="font-sans text-sm text-text-muted leading-relaxed text-center">
+            The transformation this program offers requires consistent
+            engagement across all 3 weeks. Missing too many reminder prompts
+            may delay or prevent the intended result. The program, however, is
+            yours for life — fully resettable, so you may begin again as many
+            times as needed to arrive at the experience you came for.
+          </p>
+        </motion.div>
       </div>
     </section>
   );
