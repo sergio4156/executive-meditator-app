@@ -10,6 +10,7 @@ import {
   Switch,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -87,6 +88,30 @@ export function SettingsScreen() {
     ]);
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account, your meditation progress, and all associated data.\n\nTapping "Send Request" will open your email app with a pre-filled deletion request to support. We process requests within 30 days and confirm by email when complete.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Send Request',
+          style: 'destructive',
+          onPress: () => {
+            const accountEmail = user?.email ?? '[your account email]';
+            const subject = encodeURIComponent('Account deletion request');
+            const body = encodeURIComponent(
+              `Hello,\n\nI would like to request deletion of my Executive Meditator account and all associated data.\n\nAccount email: ${accountEmail}\n\nThank you.`,
+            );
+            Linking.openURL(
+              `mailto:hillisoralee@gmail.com?subject=${subject}&body=${body}`,
+            );
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -110,6 +135,14 @@ export function SettingsScreen() {
             onPress={handleSignOut}
             activeOpacity={0.8}>
             <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteAccountButton}
+            onPress={handleDeleteAccount}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Delete account">
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
           </TouchableOpacity>
         </Card>
 
@@ -396,6 +429,16 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  deleteAccountButton: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+  },
+  deleteAccountText: {
+    color: theme.colors.textMuted,
+    fontSize: theme.typography.fontSize.sm,
+    textDecorationLine: 'underline',
   },
   devButton: {
     borderWidth: 1,

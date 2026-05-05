@@ -59,14 +59,15 @@ export default function DeleteAccountPage() {
               </h3>
               <p>
                 Open The Executive Meditator app on your phone. Go to{' '}
-                <span className="text-gold-400">Settings</span> and select{' '}
-                <span className="text-gold-400">Delete account</span>. Confirm
-                the action when prompted. Your account will be removed
-                immediately.
+                <span className="text-gold-400">Settings</span> and tap{' '}
+                <span className="text-gold-400">Delete Account</span>. After
+                you confirm, the app will open your email with a pre-filled
+                deletion request. Send the email and we will process your
+                request within 30 days, confirming by email when complete.
               </p>
 
               <h3 className="font-serif text-base text-white font-light mb-2 mt-6">
-                Option 2 — By email request
+                Option 2 — By email directly
               </h3>
               <p>
                 If you cannot access the app, email us at{' '}
@@ -128,10 +129,10 @@ export default function DeleteAccountPage() {
                 Timeline
               </h2>
               <p>
-                In-app deletions take effect immediately. Email-requested
-                deletions are completed within 30 days, typically much sooner.
-                You will receive an email confirmation once your account has
-                been removed.
+                Both deletion paths route through email so we can verify the
+                request and confirm completion. Deletions are processed within
+                30 days, typically much sooner. You will receive an email
+                confirmation once your account has been removed.
               </p>
             </section>
 
