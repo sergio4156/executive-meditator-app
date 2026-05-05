@@ -91,14 +91,17 @@ SUPABASE_SERVICE_ROLE_KEY
 2. The auth state listener in `AppNavigator` (subscribed via `supabase.auth.onAuthStateChange`) dispatches to `authSlice` and triggers `syncOneSignalIdForUser(uid)` to associate the device's OneSignal player ID with the logged-in user.
 3. On first sign-in, the `handle_new_user` database trigger creates a `profiles` row automatically.
 
-> Note: the website uses a different flow — `signInWithOtp` (magic link) — to onboard users via email before they download the app.
+> Note: the website uses a different signup path — `supabase.auth.signUp({ email, password })` with an email-confirmation link — to onboard users before they download the app. Mobile and website both ultimately produce the same Supabase auth user; the app uses email+password sign-in to access it.
 
 ### Notification setup
-On app launch, `App.tsx` calls `initializeNotifications()` (defined in `src/services/onesignal/notifications.ts`) which:
-1. Sets the OneSignal app ID (`OneSignal.setAppId`) — the SDK is `react-native-onesignal` v4.5.1.
-2. Triggers the OS notification permission prompt (`promptForPushNotificationsWithUserResponse`).
-3. Reads the device's OneSignal player ID via `getDeviceState()` and saves it to Redux (`notificationSlice.fcmToken`).
-4. If a Supabase session already exists at that moment, upserts the player ID into `profiles.onesignal_player_id`.
+OneSignal initializes in two stages — native first, then JS — to avoid a first-launch race on Android:
+
+1. **Native** (`MainApplication.onCreate` in `android/app/src/main/java/com/executivemeditator/MainApplication.kt`): calls `OneSignal.initWithContext(this)` immediately at Application startup so `OneSignal.appContext` is populated before any JS runs. Without this, `NotificationPermissionController`'s static initializer NPEs on fresh Play Store installs (Play Protect overhead delays setAppId past the prompt). See [feedback_onesignal_native_init.md](memory/feedback_onesignal_native_init.md).
+2. **JS** (`App.tsx` calls `initializeNotifications()` from `src/services/onesignal/notifications.ts`):
+   - Sets the OneSignal app ID (`OneSignal.setAppId`) — the SDK is `react-native-onesignal` v4.5.1.
+   - Triggers the OS notification permission prompt (`promptForPushNotificationsWithUserResponse`).
+   - Reads the device's OneSignal player ID via `getDeviceState()` and saves it to Redux (`notificationSlice.fcmToken`).
+   - If a Supabase session already exists at that moment, upserts the player ID into `profiles.onesignal_player_id`.
 
 Because the player ID save in step 4 is gated on an active session, a fresh-install user (who launches the app *before* logging in) would otherwise never have their player ID saved. To close this race, `syncOneSignalIdForUser(uid)` is also called from the auth state change handler in `AppNavigator` whenever the session flips to logged-in.
 
@@ -136,11 +139,14 @@ Deployed to Vercel. All API routes run as serverless functions.
 | Route | Description |
 |---|---|
 | `/` | Marketing landing page (one-page scroll) |
-| `/setup` | Onboarding — email sign-up form |
-| `/auth/callback` | Client-side page that exchanges the OTP code for a session via `supabase.auth.exchangeCodeForSession` |
+| `/setup` | Onboarding — email + password sign-up form |
+| `/auth/callback` | Client-side page that waits for Supabase to auto-process the implicit-flow URL fragment, then redirects to `/setup/confirmed` (or back to `/setup` with an error param) |
+| `/auth/reset-password` | Password reset flow (handles both PKCE and implicit token formats) |
 | `/setup/confirmed` | Post-verification confirmation, redirects to Stripe |
 | `/setup/success` | Post-payment success page with App Store / Google Play download links |
 | `/privacy` | Privacy policy (required by Google Play Store) |
+| `/terms` | Terms of service |
+| `/delete-account` | Public account-deletion instructions page (required by Google Play since 2024) |
 
 ### API routes
 
@@ -161,14 +167,19 @@ Called by the corporate inquiry form (`#corporate` section).
 
 ### Auth flow (website)
 
+The website client uses Supabase's **implicit** flow type (configured in `website/src/lib/supabase.ts` via `flowType: 'implicit'`) so verification links work cross-browser. PKCE was tried first and rejected because non-technical users routinely click email links from a different browser context (e.g., Gmail's in-app browser) than the one where they signed up — PKCE's localStorage code_verifier requirement is fatal in that scenario.
+
 ```
 /setup form submit
-  → supabase.auth.signInWithOtp({ email })   # sends magic link
+  → supabase.auth.signUp({ email, password, options: { emailRedirectTo: ... } })
+  → Supabase sends confirmation email with /auth/v1/verify?token=...
   → user clicks email link
-  → /auth/callback?code=...
-  → supabase.auth.exchangeCodeForSession(code)
-  → redirect to /setup/confirmed
-  → redirect to Stripe checkout
+  → Supabase verifies the token server-side and redirects to:
+    /auth/callback?next=/setup/confirmed#access_token=...&refresh_token=...
+  → supabase client (with detectSessionInUrl: true, default) auto-processes the fragment
+  → callback page listens for INITIAL_SESSION via onAuthStateChange
+  → redirect to /setup/confirmed (the `next` query param)
+  → redirect to Stripe checkout (with allow_promotion_codes: true)
   → Stripe webhook → profiles.is_paid = true
   → redirect to /setup/success
 ```
