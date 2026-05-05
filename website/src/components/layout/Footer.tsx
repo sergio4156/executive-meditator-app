@@ -147,6 +147,13 @@ export default function Footer() {
             >
               Terms
             </Link>
+            <span className="text-cream-200 opacity-30">&middot;</span>
+            <Link
+              href="/delete-account"
+              className="text-cream-200 opacity-60 hover:opacity-100 hover:text-gold-400 transition-all duration-200"
+            >
+              Delete account
+            </Link>
           </div>
           <p className="font-sans text-xs text-cream-200 opacity-40 italic font-serif">
             Designed for the executive mind.
