@@ -2,34 +2,32 @@
 
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 function AuthCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const code = searchParams.get('code');
     const next = searchParams.get('next') ?? '/setup/confirmed';
 
-    if (!code) {
+    // Implicit flow puts errors in the URL fragment (e.g. expired tokens).
+    if (typeof window !== 'undefined' && window.location.hash.includes('error=')) {
       router.replace('/setup?error=verification_failed');
       return;
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
-
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        console.error('Auth callback error:', error.message);
-        router.replace('/setup?error=verification_failed');
-      } else {
-        router.replace(next);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        if (session) {
+          router.replace(next);
+        } else {
+          router.replace('/setup?error=verification_failed');
+        }
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [router, searchParams]);
 
   return (
