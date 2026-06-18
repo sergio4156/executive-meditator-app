@@ -1,6 +1,6 @@
 /**
  * AuthScreen — Email/password sign-in only. No guest access, no in-app sign up.
- * Users create their account on the website (executivemeditator.com/setup)
+ * Users create their account on the website (theexecutivemeditator.com/setup)
  * then sign in here with the same email and password.
  */
 import React, {useState} from 'react';
@@ -123,8 +123,8 @@ export function AuthScreen() {
           </TouchableOpacity>
 
           <Text style={styles.hint}>
-            Purchase access at executivemeditator.com first, then sign in here
-            with the same email and password.
+            Purchase access at theexecutivemeditator.com first, then sign in
+            here with the same email and password.
           </Text>
 
           <TouchableOpacity

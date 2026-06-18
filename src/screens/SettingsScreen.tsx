@@ -247,6 +247,12 @@ export function SettingsScreen() {
               </View>
             </View>
           </View>
+          {localAwakeEnd - localAwakeStart < 5 && (
+            <Text style={styles.awakeWarning}>
+              5 awake hours minimum is recommended for the program to take
+              full effect.
+            </Text>
+          )}
           <Text style={styles.tzNote}>
             Timezone: {getDeviceTimeZone()} (auto-detected)
           </Text>
@@ -414,6 +420,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: theme.spacing.sm,
     fontStyle: 'italic',
+  },
+  awakeWarning: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.sm,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   aboutText: {fontSize: theme.typography.fontSize.sm, color: theme.colors.textSecondary},
   signOutButton: {

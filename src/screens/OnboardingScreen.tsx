@@ -120,6 +120,13 @@ export function OnboardingScreen() {
               this window each day
             </Text>
           )}
+
+          {totalHours > 0 && totalHours < 5 && (
+            <Text style={styles.warning}>
+              5 awake hours minimum is recommended for the program to take
+              full effect.
+            </Text>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -231,6 +238,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     marginTop: theme.spacing.xs,
+  },
+  warning: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
   },
   continueBtn: {
     width: '100%',
