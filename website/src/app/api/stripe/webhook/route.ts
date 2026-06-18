@@ -90,12 +90,12 @@ async function sendDownloadEmail(email: string) {
           Welcome to The Executive Meditator
         </h1>
         <p style="font-size: 14px; color: #E8E3DB; opacity: 0.8; margin-bottom: 24px; border-bottom: 1px solid #1B2B4B; padding-bottom: 20px;">
-          Your investment has been received. You now have full access to the program.
+          Your purchase has been received. You now have lifetime access to the 21-day program.
         </p>
 
         <p style="font-size: 15px; color: #E8E3DB; line-height: 1.7; margin-bottom: 24px;">
           The next step is to download the app and sign in with this email address
-          (<strong style="color: #C4A962;">${email}</strong>) to unlock your access.
+          (<strong style="color: #C4A962;">${email}</strong>) to unlock the Great Silence.
         </p>
 
         <div style="margin: 32px 0;">
@@ -115,8 +115,8 @@ async function sendDownloadEmail(email: string) {
             <strong style="color: #C4A962;">How it works:</strong><br/>
             1. Download the app using one of the links above<br/>
             2. Sign in with <strong>${email}</strong><br/>
-            3. Set your awake hours — your reminders will begin automatically<br/>
-            4. When a reminder arrives, pause for 10 seconds of open-eyed awareness
+            3. Set your awake hours — a minimum of 5 is recommended<br/>
+            4. When a reminder arrives, pause for 10 seconds and enter the Great Silence
           </p>
         </div>
 

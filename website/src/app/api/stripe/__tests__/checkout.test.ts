@@ -57,7 +57,7 @@ describe('POST /api/stripe/checkout', () => {
     await POST(makeRequest({ email: 'user@example.com', userId: 'uuid-123' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: { supabase_user_id: 'uuid-123' },
+        metadata: { supabase_user_id: 'uuid-123', tier: 'individual' },
       })
     );
   });
@@ -66,20 +66,58 @@ describe('POST /api/stripe/checkout', () => {
     await POST(makeRequest({ email: 'user@example.com' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: { supabase_user_id: '' },
+        metadata: { supabase_user_id: '', tier: 'individual' },
       })
     );
   });
 
-  it('charges $500 (50000 cents)', async () => {
+  it('defaults to the individual tier and charges $10 (1000 cents)', async () => {
     await POST(makeRequest({ email: 'user@example.com' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: expect.arrayContaining([
           expect.objectContaining({
-            price_data: expect.objectContaining({ unit_amount: 50000 }),
+            price_data: expect.objectContaining({
+              unit_amount: 1000,
+              product_data: expect.objectContaining({
+                name: 'The Executive Meditator — Individual',
+              }),
+            }),
           }),
         ]),
+      })
+    );
+  });
+
+  it('charges $500 (50000 cents) when tier is corporate', async () => {
+    await POST(makeRequest({ email: 'user@example.com', tier: 'corporate' }));
+    expect(mockStripe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: expect.arrayContaining([
+          expect.objectContaining({
+            price_data: expect.objectContaining({
+              unit_amount: 50000,
+              product_data: expect.objectContaining({
+                name: 'The Executive Meditator — Corporate (up to 500 employees)',
+              }),
+            }),
+          }),
+        ]),
+        metadata: expect.objectContaining({ tier: 'corporate' }),
+      })
+    );
+  });
+
+  it('treats unknown tier values as individual', async () => {
+    await POST(makeRequest({ email: 'user@example.com', tier: 'enterprise-unicorn' }));
+    expect(mockStripe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: expect.arrayContaining([
+          expect.objectContaining({
+            price_data: expect.objectContaining({ unit_amount: 1000 }),
+          }),
+        ]),
+        metadata: expect.objectContaining({ tier: 'individual' }),
       })
     );
   });

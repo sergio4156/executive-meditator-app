@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+type Tier = 'individual' | 'corporate';
+
+const TIER_CONFIG: Record<Tier, { unitAmount: number; name: string; description: string }> = {
+  individual: {
+    unitAmount: 1000, // $10.00 in cents
+    name: 'The Executive Meditator — Individual',
+    description:
+      'Lifetime access to the Executive Meditator app and the complete 21-day program. One-time purchase, no subscription.',
+  },
+  corporate: {
+    unitAmount: 50000, // $500.00 in cents
+    name: 'The Executive Meditator — Corporate (up to 500 employees)',
+    description:
+      'Organization-wide license for the Executive Meditator app and the 21-day program. Covers up to 500 employees, one-time purchase, no subscription.',
+  },
+};
+
 export async function POST(request: NextRequest) {
   try {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -15,7 +32,14 @@ export async function POST(request: NextRequest) {
     });
 
     const body = await request.json().catch(() => ({}));
-    const { email, userId } = body as { email?: string; userId?: string };
+    const { email, userId, tier } = body as {
+      email?: string;
+      userId?: string;
+      tier?: Tier;
+    };
+
+    const resolvedTier: Tier = tier === 'corporate' ? 'corporate' : 'individual';
+    const { unitAmount, name, description } = TIER_CONFIG[resolvedTier];
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
@@ -30,17 +54,16 @@ export async function POST(request: NextRequest) {
         {
           price_data: {
             currency: 'usd',
-            unit_amount: 50000, // $500.00 in cents
+            unit_amount: unitAmount,
             product_data: {
-              name: 'The Executive Meditator — Executive Tier',
-              description:
-                'Full access to the Executive Meditator program. Includes the complete 3-week guided meditation journey designed for high-performing leaders.',
+              name,
+              description,
             },
           },
           quantity: 1,
         },
       ],
-      metadata: { supabase_user_id: userId ?? '' },
+      metadata: { supabase_user_id: userId ?? '', tier: resolvedTier },
       success_url: `${baseUrl}/setup/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/#pricing`,
     });
