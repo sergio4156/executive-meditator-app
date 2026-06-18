@@ -24,21 +24,21 @@ const fadeInRight = {
 const threePs = [
   {
     letter: 'P',
-    label: 'Profits',
+    label: 'Peace',
     description:
-      'Clarity of mind directly correlates with quality of decision-making. Executives who practice stillness consistently report improved strategic thinking and measurable business outcomes.',
+      'Deep, unshakeable inner silence that dissolves stress and burnout. The Great Silence becomes a permanent inner resource your team can return to in 10 seconds — anywhere, anytime.',
   },
   {
     letter: 'P',
     label: 'Productivity',
     description:
-      'When the mind is not exhausted by its own noise, it accomplishes more in less time. The 10-second practice acts as a system reset — restoring focus and momentum throughout the day.',
+      'Laser-focused clarity and inspired action. When the mind is not exhausted by its own noise, your team accomplishes more in less time. The 10-second practice acts as a system reset throughout the day.',
   },
   {
     letter: 'P',
-    label: 'Peace',
+    label: 'Profits',
     description:
-      'The highest performers understand that sustainable excellence requires inner stability. Peace is not the absence of pressure — it is the capacity to perform brilliantly within it.',
+      'Higher performance, better decision-making, and novel solutions that drive real business growth — inspired ideas automatically aligned with the First Principle of Oneness.',
   },
 ];
 
@@ -161,15 +161,21 @@ export default function CorporateSection() {
             Corporate Experience
           </p>
           <h2 className="font-serif text-3xl md:text-4xl text-white font-light leading-snug mb-5">
-            CEO Account Setup &amp;{' '}
+            The 21-Day Corporate{' '}
             <br className="hidden md:block" />
-            Corporate Experience
+            Transformation
           </h2>
+          <p className="font-sans text-sm text-cream-200 opacity-70 leading-relaxed mb-5 max-w-md">
+            One flat investment transforms your entire team into Executive
+            Meditators — any role, any field. In 21 days your people gain
+            permanent access to the Great Silence and begin receiving inspired
+            insight directly from the All-Infinite Database.
+          </p>
           <p className="font-sans text-sm text-cream-200 opacity-70 leading-relaxed mb-12 max-w-md">
-            The Executive Meditator corporate program is designed for organizations
-            that understand performance is inseparable from presence. When the
-            leader is still, the organization moves with precision. When the team
-            is present, execution becomes effortless.
+            What once took monks, nuns, lamas, and priests a lifetime of
+            rigorous practice is now accessible to your organization through a
+            simple 10-second daily practice. Less than $1 per employee.
+            Lifetime access.
           </p>
 
           {/* The 3 P's */}

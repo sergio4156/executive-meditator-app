@@ -35,19 +35,19 @@ const steps = [
     number: '01',
     title: 'Program the App',
     description:
-      'Enter the average number of hours you are awake each day. This is your only input — the app does the rest, scheduling your 10-second practice automatically throughout your day.',
+      'Enter the average number of hours you are awake each day. This is your only input — the app does the rest, scheduling your 10-second practice automatically throughout your day. The minimum user program suggested to achieve the result of permanent awareness of the All is 5 hours MINIMUM.',
   },
   {
     number: '02',
     title: 'Deepen the Practice',
     description:
-      'In Week 2, your reminders shift to every 30 minutes. As awareness grows, so does your capacity for presence. The silence becomes more accessible, more familiar.',
+      'In Week 2, your reminders shift to every 30 minutes. As awareness grows, so does your capacity for presence. The Great Silence becomes more accessible, more familiar — a place you can return to in 10 seconds, anytime.',
   },
   {
     number: '03',
     title: 'Integrate the Stillness',
     description:
-      'Week 3 brings reminders every 15 minutes. The practice: eyes open, gaze slightly up and to the right, bring up the Feeling of Joyful Anticipation — and Listen. Hold that gaze and feeling. The app vibrates when your 10 seconds are complete, so you never have to count. Watch the video demonstration.',
+      'Week 3 brings reminders every 15 minutes. The practice: eyes open, gaze slightly up and to the right, bring up the Feeling of Joyful Anticipation — and Listen. The Great Silence opens, and the All-Infinite Database becomes available, filtered through the First Principle of Oneness. The app vibrates when your 10 seconds are complete, so you never have to count. Watch the video demonstration.',
   },
 ];
 

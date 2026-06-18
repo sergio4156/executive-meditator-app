@@ -24,8 +24,9 @@ export default function SuccessPage() {
             Welcome to the Program
           </h1>
           <p className="font-sans text-cream-200 text-sm leading-relaxed opacity-80 mb-8">
-            Your investment has been received. Download the app and sign in
-            with your email and password to unlock your full access.
+            Your purchase has been received. Lifetime access is yours. Download
+            the app and sign in with your email and password to unlock the
+            Great Silence.
           </p>
 
           {/* Download buttons */}
@@ -63,8 +64,8 @@ export default function SuccessPage() {
               {[
                 'Download the app using one of the links above',
                 'Sign in with the same email and password you used here',
-                'Set your awake hours — reminders begin automatically',
-                'When a reminder arrives, pause for 10 seconds',
+                'Set your awake hours — a minimum of 5 is recommended',
+                'When a reminder arrives, pause for 10 seconds and enter the Great Silence',
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3 font-sans text-xs text-cream-200 opacity-70 leading-relaxed">
                   <span className="font-serif text-gold-500 font-light flex-shrink-0">0{i + 1}</span>

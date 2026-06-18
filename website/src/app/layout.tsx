@@ -17,22 +17,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'The Executive Meditator | Profits, Productivity & Peace',
+  title: 'The Executive Meditator | Peace, Productivity & Profits',
   description:
-    'The Executive Meditator app is designed for high-performing leaders who understand that true excellence requires stillness. Experience the 3 P\'s — Profits, Productivity, and Peace — in just 3 weeks.',
+    'Become an Executive Meditator — no title required. In just 21 days, the Great Silence becomes a permanent capacity: 10 seconds of inner stillness, accessible anytime, for life.',
   keywords: [
-    'executive meditation',
-    'mindfulness for executives',
-    'leadership meditation',
-    'productivity meditation',
-    'corporate wellness',
-    'executive performance',
+    'executive meditator',
+    'meditation app',
+    '10 second meditation',
+    'great silence',
+    'mindfulness for anyone',
+    'corporate meditation',
+    'workplace wellness',
+    '21 day meditation program',
   ],
   authors: [{ name: 'The Executive Meditator' }],
   openGraph: {
-    title: 'The Executive Meditator | Profits, Productivity & Peace',
+    title: 'The Executive Meditator | Peace, Productivity & Profits',
     description:
-      'Designed for high-performing leaders. Experience the 3 P\'s — Profits, Productivity, and Peace — in just 3 weeks.',
+      'Become an Executive Meditator in 21 days. Lifetime access to the Great Silence — 10 seconds of inner stillness, anytime, for life.',
     type: 'website',
   },
 };

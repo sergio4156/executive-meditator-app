@@ -1,6 +1,7 @@
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/sections/HeroSection';
+import WhoSection from '@/components/sections/WhoSection';
 import InstructionsSection from '@/components/sections/InstructionsSection';
 import VideoSection from '@/components/sections/VideoSection';
 import PricingSection from '@/components/sections/PricingSection';
@@ -10,6 +11,7 @@ export default function Home() {
     <main>
       <Navigation />
       <HeroSection />
+      <WhoSection />
       <InstructionsSection />
       <VideoSection />
       <PricingSection />

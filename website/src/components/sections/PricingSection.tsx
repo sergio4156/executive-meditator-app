@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Link from 'next/link';
 
@@ -13,54 +13,50 @@ const fadeUp = {
   }),
 };
 
-const tiers = [
+type Variant = 'cream' | 'navy';
+
+interface Tier {
+  id: 'individual' | 'corporate';
+  role: string;
+  subtitle: string;
+  price: string;
+  pricingNote: string;
+  description: string;
+  cta: string;
+  ctaHref: string;
+  featured: boolean;
+  badge: string | null;
+  variant: Variant;
+}
+
+const tiers: Tier[] = [
   {
-    id: 'executive',
-    role: 'Executive',
-    subtitle: 'You — the leader',
+    id: 'individual',
+    role: 'Individual',
+    subtitle: 'Anyone, any field',
+    price: '$10',
+    pricingNote: 'One-time. Lifetime access.',
+    description:
+      'Complete the 21-day program. Permanently unlock the Great Silence — 10 seconds of inner stillness, accessible anytime, for life.',
+    cta: 'Get the App',
+    ctaHref: '/setup',
+    featured: false,
+    badge: null,
+    variant: 'cream',
+  },
+  {
+    id: 'corporate',
+    role: 'Corporate',
+    subtitle: 'Up to 500 employees',
     price: '$500',
+    pricingNote: 'One-time, organization-wide.',
     description:
-      'Full access to the Executive Meditator program. The foundational investment that cascades excellence through your entire organization.',
-    cta: 'Begin Your Journey',
+      'A 21-day transformation for your entire team. Less than $1 per employee. Returns: Peace, Productivity, Profits — what once took monks a lifetime, now in 21 days.',
+    cta: 'Get in Touch',
+    ctaHref: '#corporate',
     featured: true,
-    badge: 'Most Exclusive',
-    variant: 'navy' as const,
-  },
-  {
-    id: 'cfo-vp',
-    role: 'CFO / VP',
-    subtitle: 'Senior leadership',
-    price: '$250',
-    description:
-      'For your most senior leaders. Full program access at half the investment — extending the culture of mindful performance to the C-suite.',
-    cta: 'Get Access',
-    featured: false,
-    badge: null,
-    variant: 'sage' as const,
-  },
-  {
-    id: 'manager',
-    role: 'Manager Level',
-    subtitle: 'Mid-level leadership',
-    price: '$125',
-    description:
-      'For the managers who translate vision into execution. A quarter of the executive investment, a full measure of the benefit.',
-    cta: 'Get Access',
-    featured: false,
-    badge: null,
-    variant: 'cream' as const,
-  },
-  {
-    id: 'employees',
-    role: 'Employees',
-    subtitle: 'Your entire team',
-    price: '$0.99',
-    description:
-      'Peace is not a privilege. At less than a dollar, every team member of the organization gains access to the 10-second meditation — increasing the 3 P\'s for the entire organization.',
-    cta: 'Get Access',
-    featured: false,
-    badge: null,
-    variant: 'light-sage' as const,
+    badge: 'Best Value',
+    variant: 'navy',
   },
 ];
 
@@ -68,57 +64,40 @@ function PricingCard({
   tier,
   index,
   inView,
-  onExecutiveCta,
-  loading,
 }: {
-  tier: (typeof tiers)[0];
+  tier: Tier;
   index: number;
   inView: boolean;
-  onExecutiveCta: () => void;
-  loading: boolean;
 }) {
   const isNavy = tier.variant === 'navy';
-  const isSage = tier.variant === 'sage';
-  const isCream = tier.variant === 'cream';
-  const isLightSage = tier.variant === 'light-sage';
 
   const bgClass = isNavy
     ? 'bg-navy-950 border-navy-800'
-    : isSage
-    ? 'bg-sage-500 border-sage-600'
-    : isCream
-    ? 'bg-cream-50 border-cream-200'
-    : 'bg-sage-300/30 border-sage-300/50';
+    : 'bg-cream-50 border-cream-200';
 
-  const headingClass = isNavy
-    ? 'text-white'
-    : isSage
-    ? 'text-white'
-    : 'text-navy-950';
+  const headingClass = isNavy ? 'text-white' : 'text-navy-950';
 
   const subClass = isNavy
     ? 'text-cream-200 opacity-60'
-    : isSage
-    ? 'text-white opacity-70'
     : 'text-text-muted';
 
-  const priceClass = isNavy
-    ? 'text-gold-400'
-    : isSage
-    ? 'text-white'
-    : 'text-navy-950';
+  const priceClass = isNavy ? 'text-gold-400' : 'text-navy-950';
 
   const bodyClass = isNavy
     ? 'text-cream-200 opacity-70'
-    : isSage
-    ? 'text-white opacity-80'
     : 'text-text-muted';
 
   const ctaBg = isNavy
     ? 'bg-gold-500 hover:bg-gold-600 text-navy-950'
-    : isSage
-    ? 'bg-white/20 hover:bg-white/30 text-white border border-white/40'
     : 'bg-navy-950 hover:bg-navy-900 text-white';
+
+  const handleAnchorScroll = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (tier.ctaHref.startsWith('#')) {
+      e.preventDefault();
+      const el = document.getElementById(tier.ctaHref.slice(1));
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <motion.div
@@ -151,19 +130,15 @@ function PricingCard({
 
       {/* Price */}
       <div className="mb-6">
-        <span className={`font-serif text-5xl font-light ${priceClass}`}>
-          {tier.price}
-        </span>
-        {tier.id !== 'employees' && (
-          <span className={`font-sans text-sm ml-1 ${subClass}`}>
-            / per license
+        <div>
+          <span className={`font-serif text-5xl font-light ${priceClass}`}>
+            {tier.price}
           </span>
-        )}
-        {tier.id === 'employees' && (
-          <span className={`font-sans text-sm ml-1 ${subClass}`}>
-            / per month
-          </span>
-        )}
+          <span className={`font-sans text-sm ml-2 ${subClass}`}>USD</span>
+        </div>
+        <p className={`font-sans text-xs mt-2 ${subClass}`}>
+          {tier.pricingNote}
+        </p>
       </div>
 
       {/* Description */}
@@ -172,17 +147,17 @@ function PricingCard({
       </p>
 
       {/* CTA */}
-      {tier.id === 'executive' ? (
-        <button
-          onClick={onExecutiveCta}
-          disabled={loading}
-          className={`w-full py-3 font-sans text-sm tracking-widest uppercase rounded-sm transition-colors duration-200 ${ctaBg} disabled:opacity-60`}
+      {tier.ctaHref.startsWith('#') ? (
+        <a
+          href={tier.ctaHref}
+          onClick={handleAnchorScroll}
+          className={`block text-center py-3 font-sans text-sm tracking-widest uppercase rounded-sm transition-colors duration-200 ${ctaBg}`}
         >
-          {loading ? 'Preparing...' : tier.cta}
-        </button>
+          {tier.cta}
+        </a>
       ) : (
         <Link
-          href="/setup"
+          href={tier.ctaHref}
           className={`block text-center py-3 font-sans text-sm tracking-widest uppercase rounded-sm transition-colors duration-200 ${ctaBg}`}
         >
           {tier.cta}
@@ -193,30 +168,8 @@ function PricingCard({
 }
 
 export default function PricingSection() {
-  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
-
-  const handleExecutiveCta = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json() as { url?: string };
-      if (data.url && data.url !== '#') {
-        window.location.href = data.url;
-      } else {
-        window.location.href = '/setup';
-      }
-    } catch {
-      window.location.href = '/setup';
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <section id="pricing" ref={ref} className="py-24 md:py-32 bg-cream-50">
@@ -230,10 +183,10 @@ export default function PricingSection() {
           className="text-center mb-5"
         >
           <p className="font-sans text-xs text-gold-600 uppercase tracking-widest mb-4">
-            Investment
+            Pricing
           </p>
           <h2 className="font-serif text-4xl md:text-5xl text-navy-950 font-light">
-            Investment in Your Excellence
+            One Investment, Permanent Returns
           </h2>
         </motion.div>
 
@@ -244,36 +197,22 @@ export default function PricingSection() {
           variants={fadeUp}
           className="text-center font-sans text-sm text-text-muted max-w-2xl mx-auto mb-16 leading-relaxed"
         >
-          The Executive Meditator is designed around a cascade philosophy: the
-          investment reflects organizational hierarchy, ensuring that peace and
-          performance flow from the top — and reach every level.
+          One-time purchase. Lifetime access. The 21-day program installs the
+          Great Silence as a permanent capacity — for you, or for your entire
+          organization.
         </motion.p>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {tiers.map((tier, i) => (
             <PricingCard
               key={tier.id}
               tier={tier}
               index={i}
               inView={inView}
-              onExecutiveCta={handleExecutiveCta}
-              loading={loading}
             />
           ))}
         </div>
-
-        {/* Footnote */}
-        <motion.p
-          custom={0.5}
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={fadeUp}
-          className="text-center mt-12 font-serif text-base text-text-muted italic max-w-2xl mx-auto leading-relaxed"
-        >
-          The investment decreases as it cascades through your organization —
-          because peace benefits everyone.
-        </motion.p>
 
         {/* Practice disclaimer */}
         <motion.div
@@ -284,13 +223,17 @@ export default function PricingSection() {
           className="mt-16 max-w-2xl mx-auto border-t border-navy-950/10 pt-10"
         >
           <p className="font-sans text-xs text-gold-600 uppercase tracking-widest mb-4 text-center">
-            A Note on Practice
+            A Note on Practice and Results
           </p>
           <p className="font-sans text-sm text-text-muted leading-relaxed text-center">
-            The transformation this program offers requires consistent
-            engagement across all 3 weeks. Missing too many reminder prompts
-            may delay or prevent the intended result. The program, however, is
-            yours for life — fully resettable, so you may begin again as many
+            Results vary by individual. The transformation this program
+            describes — including the experience of the Great Silence and
+            ongoing access to inspired insight — depends on consistent
+            engagement across all 21 days. A minimum of 5 awake hours per day
+            is recommended for the program to take full effect. The Executive
+            Meditator app is a wellness and meditation tool, not medical advice
+            or a substitute for professional care. Your access is for life —
+            the program is fully resettable, so you may begin again as many
             times as needed to arrive at the experience you came for.
           </p>
         </motion.div>

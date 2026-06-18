@@ -126,8 +126,9 @@ export default function SetupPage() {
             Begin Your Journey
           </h1>
           <p className="font-sans text-cream-200 text-sm text-center mb-8 leading-relaxed opacity-80">
-            Create your executive account to access the full meditation program
-            and begin experiencing the 3 P&apos;s — Profits, Productivity, and Peace.
+            Create your account to begin the 21-day program and unlock
+            permanent access to the Great Silence — 10 seconds of inner
+            stillness, anytime, for life.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
