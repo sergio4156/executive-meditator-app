@@ -16,7 +16,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
-const WEBSITE_URL = 'https://executivemeditator.com/#pricing';
+const WEBSITE_URL = 'https://theexecutivemeditator.com/#pricing';
 const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
 const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Help%20with%20my%20account`;
 
@@ -36,16 +36,16 @@ export function PaywallScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Access Required</Text>
           <Text style={styles.cardBody}>
-            The Executive Meditator program requires a one-time investment.
-            Visit the website to complete your purchase — then sign back in with
-            the same email to unlock full access.
+            One-time $10 purchase for lifetime access to the 21-day program.
+            Complete on the website, then sign back in with the same email to
+            unlock the Great Silence.
           </Text>
 
           <TouchableOpacity
             style={styles.button}
             onPress={() => Linking.openURL(WEBSITE_URL)}
             activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Get Access</Text>
+            <Text style={styles.buttonText}>Get the App — $10</Text>
           </TouchableOpacity>
         </View>
 
