@@ -309,7 +309,7 @@ export default function SetupPage() {
           {/* Stripe note */}
           <p className="mt-6 text-center font-sans text-xs text-cream-200 opacity-50 leading-relaxed">
             After creating your account, you will be directed to a secure Stripe
-            checkout to complete your investment in the Executive tier.
+            checkout to complete your one-time purchase — $10 for lifetime access.
           </p>
         </div>
 

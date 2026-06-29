@@ -74,7 +74,7 @@ export default function ConfirmedPage() {
                 Email Confirmed
               </h1>
               <p className="font-sans text-cream-200 text-sm opacity-70 leading-relaxed">
-                Taking you to secure checkout to complete your Executive tier investment...
+                Taking you to secure checkout to complete your purchase...
               </p>
             </>
           )}
