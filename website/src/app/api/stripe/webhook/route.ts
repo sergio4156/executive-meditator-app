@@ -81,7 +81,8 @@ async function sendDownloadEmail(email: string) {
 
   const resend = new Resend(resendApiKey);
   await resend.emails.send({
-    from: 'The Executive Meditator <onboarding@resend.dev>',
+    from: 'The Executive Meditator <noreply@theexecutivemeditator.com>',
+    replyTo: 'hillisoralee@gmail.com',
     to: email,
     subject: 'Welcome to The Executive Meditator — download the app',
     html: `

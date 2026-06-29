@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (resendApiKey && notificationEmails?.length) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
-        from: 'The Executive Meditator <onboarding@resend.dev>',
+        from: 'The Executive Meditator <noreply@theexecutivemeditator.com>',
         to: notificationEmails,
         subject: `New Executive Account — ${fullName}`,
         html: `
