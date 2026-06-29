@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="font-sans text-xs text-cream-200 opacity-40 mb-10">
-            Last updated: April 23, 2025
+            Last updated: June 28, 2026
           </p>
 
           <div className="flex flex-col gap-10 font-sans text-sm text-cream-200 leading-relaxed opacity-80">
@@ -37,9 +37,11 @@ export default function PrivacyPage() {
                 1. Who We Are
               </h2>
               <p>
-                The Executive Meditator ("we", "us", or "our") operates the
-                executivemeditator.com website and The Executive Meditator
-                mobile application (collectively, the "Service"). We are
+                The Executive Meditator is operated by Executive Meditator LLC
+                ("we", "us", or "our"), a Wyoming limited liability company that
+                is the data controller responsible for your personal information.
+                We operate the theexecutivemeditator.com website and The Executive
+                Meditator mobile application (collectively, the "Service"). We are
                 committed to protecting your personal information.
               </p>
               <p className="mt-3">
@@ -201,14 +203,14 @@ export default function PrivacyPage() {
               </h2>
               <p>
                 If you have any questions about this Privacy Policy, please
-                contact us at{' '}
+                contact Executive Meditator LLC at{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>
-                .
+                , or by mail at PO Box 587, Cedarville, CA 96104.
               </p>
             </section>
           </div>

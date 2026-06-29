@@ -26,7 +26,7 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="font-sans text-xs text-cream-200 opacity-40 mb-10">
-            Last updated: April 26, 2026
+            Last updated: June 28, 2026
           </p>
 
           <div className="flex flex-col gap-10 font-sans text-sm text-cream-200 leading-relaxed opacity-80">
@@ -42,7 +42,9 @@ export default function TermsPage() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                By creating an account or using The Executive Meditator (the &quot;Service&quot;), you
+                The Executive Meditator (the &quot;Service&quot;) is provided by Executive
+                Meditator LLC, a Wyoming limited liability company (&quot;we&quot;, &quot;us&quot;,
+                or &quot;our&quot;). By creating an account or using the Service, you
                 agree to these Terms of Service and our{' '}
                 <Link href="/privacy" className="text-gold-400 hover:text-gold-300 underline">
                   Privacy Policy
@@ -143,14 +145,15 @@ export default function TermsPage() {
                 10. Contact
               </h2>
               <p>
-                Questions about these Terms may be directed to{' '}
+                Questions about these Terms may be directed to Executive Meditator
+                LLC at{' '}
                 <a
                   href="mailto:hillisoralee@gmail.com"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
                   hillisoralee@gmail.com
                 </a>
-                .
+                , or by mail at PO Box 587, Cedarville, CA 96104.
               </p>
             </section>
           </div>
