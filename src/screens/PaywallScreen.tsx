@@ -1,6 +1,8 @@
 /**
  * PaywallScreen — shown when a user is authenticated but has not paid.
- * Directs them to the website to complete their purchase.
+ * Per Google Play's Payments policy, this screen does NOT advertise a price
+ * or link out to an external purchase. It only tells the user their account
+ * lacks access and offers a support contact.
  */
 import React from 'react';
 import {
@@ -16,7 +18,6 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
-const WEBSITE_URL = 'https://theexecutivemeditator.com/#pricing';
 const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
 const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Help%20with%20my%20account`;
 
@@ -36,17 +37,10 @@ export function PaywallScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Access Required</Text>
           <Text style={styles.cardBody}>
-            One-time $10 purchase for lifetime access to the 21-day program.
-            Complete on the website, then sign back in with the same email to
-            unlock the Great Silence.
+            This account doesn't have access to the 21-day program yet. If
+            you've already purchased, make sure you're signed in with the same
+            email. Need help? Contact support below.
           </Text>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => Linking.openURL(WEBSITE_URL)}
-            activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Get the App — $10</Text>
-          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -89,14 +83,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontFamily: theme.typography.fontFamily.serif,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 26,
-    color: theme.colors.text,
+    color: theme.colors.textPrimary,
     letterSpacing: 1,
     marginBottom: 4,
   },
   subtitle: {
-    fontFamily: theme.typography.fontFamily.sans,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.primary,
     letterSpacing: 3,
@@ -113,41 +107,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: {
-    fontFamily: theme.typography.fontFamily.serif,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 20,
-    color: theme.colors.text,
+    color: theme.colors.textPrimary,
     fontWeight: '300',
     marginBottom: 12,
   },
   cardBody: {
-    fontFamily: theme.typography.fontFamily.sans,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.textMuted,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 28,
   },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 2,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontFamily: theme.typography.fontFamily.sans,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: '600',
-    color: theme.colors.background,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
   signOutButton: {
     marginTop: 16,
   },
   signOutText: {
-    fontFamily: theme.typography.fontFamily.sans,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
     opacity: 0.6,
@@ -156,7 +134,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   supportText: {
-    fontFamily: theme.typography.fontFamily.sans,
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.primary,
     textDecorationLine: 'underline',

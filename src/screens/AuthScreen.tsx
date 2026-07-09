@@ -123,8 +123,8 @@ export function AuthScreen() {
           </TouchableOpacity>
 
           <Text style={styles.hint}>
-            Purchase access at theexecutivemeditator.com first, then sign in
-            here with the same email and password.
+            Sign in with the same email and password you used to set up your
+            account.
           </Text>
 
           <TouchableOpacity
