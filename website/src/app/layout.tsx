@@ -17,6 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.theexecutivemeditator.com'),
   title: 'The Executive Meditator | Peace, Productivity & Profits',
   description:
     'Become an Executive Meditator — no title required. In just 21 days, the Great Silence becomes a permanent capacity: 10 seconds of inner stillness, accessible anytime, for life.',
@@ -36,6 +37,8 @@ export const metadata: Metadata = {
     description:
       'Become an Executive Meditator in 21 days. Lifetime access to the Great Silence — 10 seconds of inner stillness, anytime, for life.',
     type: 'website',
+    url: 'https://www.theexecutivemeditator.com',
+    siteName: 'The Executive Meditator',
   },
 };
 

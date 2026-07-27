@@ -6,6 +6,11 @@ import InstructionsSection from '@/components/sections/InstructionsSection';
 import VideoSection from '@/components/sections/VideoSection';
 import PricingSection from '@/components/sections/PricingSection';
 import CorporateSection from '@/components/sections/CorporateSection';
+
+export const metadata = {
+  alternates: { canonical: '/' },
+};
+
 export default function Home() {
   return (
     <main>

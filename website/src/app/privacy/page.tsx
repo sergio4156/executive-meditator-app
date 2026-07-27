@@ -3,6 +3,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Privacy Policy — The Executive Meditator',
   description: 'Privacy Policy for The Executive Meditator app and website.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {

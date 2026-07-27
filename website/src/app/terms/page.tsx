@@ -3,6 +3,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Terms of Service — The Executive Meditator',
   description: 'Terms of Service for The Executive Meditator app and website.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {

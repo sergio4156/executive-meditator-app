@@ -4,6 +4,7 @@ export const metadata = {
   title: 'Delete Your Account — The Executive Meditator',
   description:
     'Request deletion of your Executive Meditator account and associated data.',
+  alternates: { canonical: '/delete-account' },
 };
 
 const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
