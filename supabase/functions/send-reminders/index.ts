@@ -144,7 +144,14 @@ serve(async (_req) => {
       // Auto-progress through weeks based on time since payment.
       const week = deriveWeek(profile.paid_at);
       const intervalMinutes = INTERVAL_BY_WEEK[week] ?? 60;
-      if (localMinutes % intervalMinutes !== 0) continue;
+      // Window check (not exact `% === 0`): the function runs every ~15 min, so a
+      // reminder is "due" when the user's local minute falls in the first 15-min
+      // slice of the interval. Exact equality silently broke half-hour /
+      // quarter-hour timezones (India UTC+5:30, Nepal +5:45) and any cron-minute
+      // drift — their local minute never landed on a clean 60/30 multiple, so
+      // they received ZERO reminders. The window fires exactly once per interval.
+      const RUN_WINDOW_MIN = 15;
+      if (localMinutes % intervalMinutes >= RUN_WINDOW_MIN) continue;
 
       playerIds.push(profile.onesignal_player_id);
     }
@@ -168,25 +175,56 @@ serve(async (_req) => {
         ...overrides,
       });
 
-    // First notification — start of meditation
-    const onesignalRes = await fetch(
-      'https://onesignal.com/api/v1/notifications',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+    // First notification — start of meditation. A OneSignal/network failure must
+    // NOT throw the whole invocation — that would drop the entire cohort's
+    // reminder for this window. Catch, log, and return gracefully.
+    let result: Record<string, unknown>;
+    try {
+      const onesignalRes = await fetch(
+        'https://onesignal.com/api/v1/notifications',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+          },
+          body: notifPayload({
+            headings: {en: 'Time to meditate'},
+            contents: {en: message},
+            data: {type: 'meditation_reminder'},
+          }),
         },
-        body: notifPayload({
-          headings: {en: 'Time to meditate'},
-          contents: {en: message},
-          data: {type: 'meditation_reminder'},
-        }),
-      },
-    );
+      );
+      result = await onesignalRes.json();
+      console.log('OneSignal result:', JSON.stringify(result));
+    } catch (sendErr) {
+      console.error(
+        'OneSignal send failed for cohort of',
+        playerIds.length,
+        ':',
+        sendErr,
+      );
+      return new Response(
+        JSON.stringify({sent: 0, error: String(sendErr)}),
+        {status: 200, headers: {'Content-Type': 'application/json'}},
+      );
+    }
 
-    const result = await onesignalRes.json();
-    console.log('OneSignal result:', JSON.stringify(result));
+    // Prune stale/invalid player IDs so they don't fail forever (best-effort,
+    // non-fatal). OneSignal returns these under errors.invalid_player_ids.
+    const invalidIds = (result?.errors as {invalid_player_ids?: string[]})
+      ?.invalid_player_ids;
+    if (Array.isArray(invalidIds) && invalidIds.length > 0) {
+      console.warn('Pruning', invalidIds.length, 'invalid OneSignal player IDs');
+      try {
+        await supabase
+          .from('profiles')
+          .update({onesignal_player_id: null})
+          .in('onesignal_player_id', invalidIds);
+      } catch (pruneErr) {
+        console.error('Failed to prune invalid player IDs:', pruneErr);
+      }
+    }
 
     // Fire end-of-meditation notification in background ~20s after reminder
     // (≈10s perceived on device due to push delivery latency — do not change, calibrated value).
@@ -195,26 +233,37 @@ serve(async (_req) => {
     console.log('Scheduling end notification in 20s (≈10s perceived)...');
     const sendEndNotification = new Promise<void>(resolve => {
       setTimeout(async () => {
-        console.log('Sending end notification now');
-        await fetch('https://onesignal.com/api/v1/notifications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
-          },
-          body: notifPayload({
-            headings: {en: 'Meditation complete'},
-            contents: {en: endMessage},
-            data: {type: 'meditation_end'},
-          }),
-        });
-        resolve();
+        try {
+          console.log('Sending end notification now');
+          await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+            },
+            body: notifPayload({
+              headings: {en: 'Meditation complete'},
+              contents: {en: endMessage},
+              data: {type: 'meditation_end'},
+            }),
+          });
+        } catch (endErr) {
+          console.error('End notification send failed:', endErr);
+        } finally {
+          resolve();
+        }
       }, 20_000);
     });
 
-    // Register background work so Deno keeps running after response is sent
-    if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
-      (globalThis as any).EdgeRuntime.waitUntil(sendEndNotification);
+    // Keep the worker alive until the delayed send completes. Prefer
+    // EdgeRuntime.waitUntil (lets the HTTP response return immediately); if it's
+    // unavailable (local/older runtime), await so the timer actually fires
+    // before the isolate is torn down — otherwise the end notification is lost.
+    const edgeRuntime = (globalThis as {EdgeRuntime?: {waitUntil?: (p: Promise<unknown>) => void}}).EdgeRuntime;
+    if (edgeRuntime && typeof edgeRuntime.waitUntil === 'function') {
+      edgeRuntime.waitUntil(sendEndNotification);
+    } else {
+      await sendEndNotification;
     }
 
     return new Response(

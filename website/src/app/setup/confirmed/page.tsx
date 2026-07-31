@@ -26,14 +26,25 @@ export default function ConfirmedPage() {
           body: JSON.stringify({ email: session.user.email, userId: session.user.id }),
         });
 
-        const { url } = await res.json();
+        // A failed checkout-session creation must surface an error, not silently
+        // look like success.
+        if (!res.ok) {
+          setStatus('error');
+          return;
+        }
+
+        const data = (await res.json()) as { url?: string };
+        const url = data?.url;
 
         if (url && url !== '/setup') {
           // Redirect to Stripe hosted checkout
           window.location.href = url;
-        } else {
-          // Stripe not configured yet — go to home
+        } else if (url === '/setup') {
+          // Stripe not configured (dev/no-op) — go to home
           window.location.href = '/?verified=true';
+        } else {
+          // No URL returned — treat as an error rather than a false success.
+          setStatus('error');
         }
       } catch {
         setStatus('error');

@@ -48,10 +48,10 @@ export default function PrivacyPage() {
               <p className="mt-3">
                 Questions about this policy may be directed to{' '}
                 <a
-                  href="mailto:hillisoralee@gmail.com"
+                  href="mailto:executivemeditator.llc@gmail.com"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
-                  hillisoralee@gmail.com
+                  executivemeditator.llc@gmail.com
                 </a>
                 .
               </p>
@@ -138,10 +138,10 @@ export default function PrivacyPage() {
                 You may request deletion of your account and all associated
                 personal data at any time by emailing{' '}
                 <a
-                  href="mailto:hillisoralee@gmail.com?subject=Delete%20My%20Account"
+                  href="mailto:executivemeditator.llc@gmail.com?subject=Delete%20My%20Account"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
-                  hillisoralee@gmail.com
+                  executivemeditator.llc@gmail.com
                 </a>{' '}
                 with the subject line "Delete My Account" from the email
                 address registered to your account. We will confirm and
@@ -206,10 +206,10 @@ export default function PrivacyPage() {
                 If you have any questions about this Privacy Policy, please
                 contact Executive Meditator LLC at{' '}
                 <a
-                  href="mailto:hillisoralee@gmail.com"
+                  href="mailto:executivemeditator.llc@gmail.com"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
-                  hillisoralee@gmail.com
+                  executivemeditator.llc@gmail.com
                 </a>
                 , or by mail at PO Box 587, Cedarville, CA 96104.
               </p>

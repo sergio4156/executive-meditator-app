@@ -7,7 +7,7 @@ export const metadata = {
   alternates: { canonical: '/delete-account' },
 };
 
-const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
+const SUPPORT_EMAIL = 'executivemeditator.llc@gmail.com';
 const DELETION_SUBJECT = 'Account deletion request';
 const DELETION_BODY =
   'Hello,%0D%0A%0D%0A' +

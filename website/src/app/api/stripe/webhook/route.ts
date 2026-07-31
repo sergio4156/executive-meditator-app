@@ -31,38 +31,80 @@ export async function POST(request: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
-    const userId = session.metadata?.supabase_user_id;
-    const email = session.customer_email;
+    const userId = session.metadata?.supabase_user_id || undefined;
+    const email = session.customer_email || undefined;
 
-    if (userId) {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    // A payment we cannot attribute must NOT be acked with 200, or Stripe stops
+    // retrying and the customer is charged but never granted access.
+    if (!userId && !email) {
+      console.error('Webhook: session', session.id, 'has neither supabase_user_id nor customer_email — cannot apply payment');
+      return NextResponse.json({ error: 'No user identifier on session.' }, { status: 500 });
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Locate the profile — prefer user_id (from checkout metadata), fall back to email.
+    const lookup = supabase
+      .from('profiles')
+      .select('user_id, is_paid, stripe_session_id');
+    const { data: profiles, error: lookupError } = await (
+      userId ? lookup.eq('user_id', userId) : lookup.eq('email', email!)
+    );
+
+    if (lookupError) {
+      console.error('Webhook: profile lookup failed:', lookupError);
+      return NextResponse.json({ error: 'Lookup failed.' }, { status: 500 });
+    }
+
+    // No matching profile — return non-200 so Stripe retries and surfaces the failure.
+    if (!profiles || profiles.length === 0) {
+      console.error(
+        'Webhook: no profile matched for',
+        userId ? `user_id ${userId}` : `email ${email}`,
+        '(session ' + session.id + ') — returning 500 so Stripe retries'
       );
+      return NextResponse.json({ error: 'Profile not found.' }, { status: 500 });
+    }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          is_paid: true,
-          email: email ?? null,
-          stripe_session_id: session.id,
-          paid_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
+    const profile = profiles[0];
 
-      if (error) {
-        console.error('Failed to mark user as paid:', error);
-        return NextResponse.json({ error: 'DB update failed.' }, { status: 500 });
-      }
+    // Idempotency: Stripe delivers at-least-once and retries. If we already
+    // applied this payment, ack without resetting paid_at (which would rewind the
+    // user's 21-day program) or re-sending the welcome email.
+    if (profile.is_paid || profile.stripe_session_id === session.id) {
+      console.log('Webhook: payment already applied for', profile.user_id, '— skipping (idempotent)');
+      return NextResponse.json({ received: true, idempotent: true });
+    }
 
-      console.log(`Payment confirmed for user ${userId} (${email})`);
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        is_paid: true,
+        stripe_session_id: session.id,
+        paid_at: new Date().toISOString(),
+        ...(email ? { email } : {}),
+      })
+      .eq('user_id', profile.user_id);
 
-      // Send post-payment email with download link
-      if (email) {
+    if (updateError) {
+      console.error('Failed to mark user as paid:', updateError);
+      return NextResponse.json({ error: 'DB update failed.' }, { status: 500 });
+    }
+
+    console.log(`Payment confirmed for user ${profile.user_id} (${email ?? 'no email'})`);
+
+    // Send the welcome/download email. The payment is already recorded, so a mail
+    // failure must not fail the webhook (that would trigger a retry; idempotency
+    // then blocks a duplicate email anyway).
+    if (email) {
+      try {
         await sendDownloadEmail(email);
+      } catch (mailErr) {
+        console.error('Payment recorded, but welcome email failed to send:', mailErr);
       }
-    } else {
-      console.warn('No supabase_user_id in Stripe session metadata — skipping DB update.');
     }
   }
 
@@ -82,7 +124,7 @@ async function sendDownloadEmail(email: string) {
   const resend = new Resend(resendApiKey);
   await resend.emails.send({
     from: 'The Executive Meditator <noreply@theexecutivemeditator.com>',
-    replyTo: 'hillisoralee@gmail.com',
+    replyTo: 'executivemeditator.llc@gmail.com',
     to: email,
     subject: 'Welcome to The Executive Meditator — download the app',
     html: `
@@ -123,7 +165,7 @@ async function sendDownloadEmail(email: string) {
 
         <p style="font-size: 13px; color: #E8E3DB; opacity: 0.6; line-height: 1.7;">
           Questions? Reply to this email or reach us at
-          <a href="mailto:hillisoralee@gmail.com" style="color: #C4A962;">hillisoralee@gmail.com</a>
+          <a href="mailto:executivemeditator.llc@gmail.com" style="color: #C4A962;">executivemeditator.llc@gmail.com</a>
         </p>
 
         <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #1B2B4B;">
