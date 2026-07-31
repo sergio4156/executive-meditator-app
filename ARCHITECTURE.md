@@ -19,6 +19,8 @@ This monorepo contains two products that share a single Supabase backend:
 | **Stripe** | Tiered payment — $10 individual / $500 corporate | Secret key (server-side only) |
 | **Resend** | Transactional email (sign-up alerts, corporate inquiries) | API key (server-side only) |
 | **Vercel** | Hosts the Next.js website | — |
+| **Sentry** | Website error monitoring (server + edge + browser) | DSN (env-gated; `@sentry/nextjs`) |
+| **Firebase Crashlytics** | Mobile crash + JS-error reporting (Android) | `google-services.json` (`@react-native-firebase/crashlytics`) |
 
 ---
 
@@ -71,8 +73,8 @@ website/supabase/migrations.sql          ← defines corporate_inquiries (websit
 3. Converts the current UTC time to each user's local time using `time_zone` via `Intl.DateTimeFormat` (DST-aware). Falls back to the cached `utc_offset_minutes` if `time_zone` is null.
 4. Skips users outside their `awake_start`/`awake_end` window.
 5. Derives the user's program week from `paid_at` via a 21-day modulo loop: days 0–6 = week 1 (60-min interval), 7–13 = week 2 (30-min), 14–20 = week 3 (15-min), then wraps. Source of truth for the cadence.
-6. Checks whether `localMinutes % intervalMinutes === 0`. Sends a push to all due devices via OneSignal's REST API (silent tone, vibration only).
-7. Schedules a second "meditation complete" notification 20 seconds later using `EdgeRuntime.waitUntil` so the HTTP response returns before Deno's timeout.
+6. Checks whether the user is due using a **window** test — `localMinutes % intervalMinutes < 15` (the run cadence), not exact `=== 0`. This is deliberate: exact equality silently skipped users in half-hour / quarter-hour timezones (India UTC+5:30, Nepal +5:45) and any cron-minute drift. Sends a push to all due devices via OneSignal's REST API (silent tone, vibration only), wrapped in try/catch so a transient OneSignal failure doesn't drop the whole cohort; stale `invalid_player_ids` are pruned best-effort.
+7. Schedules a second "meditation complete" notification 20 seconds later (calibrated value — do not change) via `EdgeRuntime.waitUntil` so the HTTP response returns before Deno's timeout; falls back to `await` when EdgeRuntime is unavailable so the delayed send isn't lost.
 
 **Required secrets** (set in Supabase Dashboard → Settings → Edge Functions):
 
@@ -125,6 +127,10 @@ A foreground heartbeat (`startScheduler` in `src/services/scheduler.ts`) is defi
 
 Access is gated on `profiles.is_paid`. `AppNavigator` routes an authenticated-but-unpaid user to `PaywallScreen`. Purchases happen **only on the website** (Stripe) — the app never processes payment. Per Google Play's Payments policy, the in-app paywall follows the **"reader app" pattern**: it shows no price and does **not** link out to the web checkout; it only states that access is required and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
 
+### Crash reporting
+
+Firebase Crashlytics (`@react-native-firebase/app` + `/crashlytics`) auto-captures native crashes and unhandled JS errors, and uploads the R8/proguard mapping so Play Console crash reports are deobfuscated. Firebase auto-initializes from `google-services.json` (no JS init). It only adds `/app` + `/crashlytics` — not `/messaging` — so it coexists with OneSignal, which still owns push. Free on the Firebase Spark plan. (iOS will additionally need `GoogleService-Info.plist` when that build is set up.)
+
 ### Redux slices
 
 | Slice | State |
@@ -162,8 +168,14 @@ Deployed to Vercel. All API routes run as serverless functions.
 #### `POST /api/stripe/checkout`
 Creates a Stripe Checkout session. Accepts a `tier` param — `individual` ($10, unit_amount 1000, the default) or `corporate` ($500, unit_amount 50000).
 - Reads `STRIPE_SECRET_KEY`. If not set, returns `{ url: '/setup' }` (graceful no-op for dev).
-- On success, returns `{ url: <stripe_checkout_url> }`. The client redirects to it.
+- On success, returns `{ url: <stripe_checkout_url> }`. The client redirects to it. The `/setup/confirmed` client checks `res.ok` + the presence of `url` before redirecting, so a failed checkout surfaces an error instead of a false success.
 - Stripe sends a webhook to `/api/stripe/webhook` on payment completion, which sets `profiles.is_paid = true`.
+
+#### `POST /api/stripe/webhook`
+Verifies the Stripe signature, then on `checkout.session.completed`:
+- Locates the profile by `supabase_user_id` (checkout metadata), **falling back to `customer_email`** if the id is missing.
+- **Idempotent:** if the profile is already paid or this `session.id` was already recorded, it acks `200` without re-writing `paid_at` (which would rewind the user's 21-day program) or re-sending the welcome email — Stripe delivers at-least-once and retries.
+- If no profile can be matched, returns a **non-200** so Stripe retries and the failure is surfaced (never silently drops a paid customer). A welcome-email failure does not fail the webhook (payment is already recorded).
 
 #### `POST /api/notify-signup`
 Called by the `/setup` page immediately after a user submits the sign-up form (before email verification). Sends an internal alert email via Resend so you know someone new signed up. Gracefully no-ops if `RESEND_API_KEY` is not configured.

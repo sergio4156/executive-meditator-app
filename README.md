@@ -34,7 +34,10 @@ A React Native mobile app (**Android live**; iOS scaffolded, not yet released) p
 - **Redux Toolkit** (`authSlice`, `meditationSlice`, `notificationSlice`)
 - **Supabase** — Postgres database + auth
 - **OneSignal 4.5.1** — push notifications
+- **Firebase Crashlytics** (`@react-native-firebase`) — crash + JS-error reporting
 - **Jest + React Native Testing Library** — unit tests
+
+(The website separately uses **Sentry** for error monitoring — see [ARCHITECTURE.md](ARCHITECTURE.md).)
 
 > `react-native-reanimated`, `lottie-react-native`, and `react-native-svg` are present in `package.json` but not currently imported anywhere in `src/` (reserved for future UI work).
 
