@@ -86,7 +86,7 @@ export default function VideoSection() {
             /* Placeholder that looks like a real video thumbnail */
             <button
               onClick={() => VIDEO_EMBED_URL && setPlaying(true)}
-              className="absolute inset-0 w-full h-full group flex items-center justify-center"
+              className="absolute inset-0 w-full h-full group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-inset"
               style={{
                 backgroundImage: `url(${THUMBNAIL_URL})`,
                 backgroundSize: 'cover',
@@ -151,7 +151,7 @@ export default function VideoSection() {
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           variants={fadeUp}
-          className="text-center mt-6 font-sans text-xs text-cream-200 opacity-40 tracking-wide"
+          className="text-center mt-6 font-sans text-xs text-cream-200 opacity-70 tracking-wide"
         >
           The Executive Meditator &mdash; Experience the Great Silence
         </motion.p>

@@ -86,7 +86,7 @@ export default function SecondVideoSection() {
             /* Placeholder styled in cream/sage tones */
             <button
               onClick={() => SECOND_VIDEO_EMBED_URL && setPlaying(true)}
-              className="absolute inset-0 w-full h-full group flex items-center justify-center"
+              className="absolute inset-0 w-full h-full group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-inset"
               style={{
                 background:
                   'linear-gradient(135deg, #F2EDE6 0%, #E8E3DB 50%, #ECE7E0 100%)',

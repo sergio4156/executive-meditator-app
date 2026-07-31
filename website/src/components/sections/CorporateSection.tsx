@@ -255,15 +255,17 @@ export default function CorporateSection() {
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 {/* Full Name */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label htmlFor="name" className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
                     Full Name <span className="text-gold-600">*</span>
                   </label>
                   <input
+                    id="name"
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Your full name"
+                    aria-invalid={!!errors.name}
                     className={inputClass('name')}
                   />
                   {errors.name && (
@@ -275,15 +277,17 @@ export default function CorporateSection() {
 
                 {/* Company Name */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label htmlFor="company" className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
                     Company Name <span className="text-gold-600">*</span>
                   </label>
                   <input
+                    id="company"
                     type="text"
                     name="company"
                     value={form.company}
                     onChange={handleChange}
                     placeholder="Your organization"
+                    aria-invalid={!!errors.company}
                     className={inputClass('company')}
                   />
                   {errors.company && (
@@ -295,15 +299,17 @@ export default function CorporateSection() {
 
                 {/* Email */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label htmlFor="email" className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
                     Email Address <span className="text-gold-600">*</span>
                   </label>
                   <input
+                    id="email"
                     type="email"
                     name="email"
                     value={form.email}
                     onChange={handleChange}
                     placeholder="you@company.com"
+                    aria-invalid={!!errors.email}
                     className={inputClass('email')}
                   />
                   {errors.email && (
@@ -315,13 +321,14 @@ export default function CorporateSection() {
 
                 {/* Phone (optional) */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label htmlFor="phone" className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
                     Phone{' '}
                     <span className="normal-case opacity-50 tracking-normal">
                       (optional)
                     </span>
                   </label>
                   <input
+                    id="phone"
                     type="tel"
                     name="phone"
                     value={form.phone}
@@ -344,6 +351,7 @@ export default function CorporateSection() {
                     name="licenses"
                     value={form.licenses}
                     onChange={handleChange}
+                    aria-invalid={!!errors.licenses}
                     className={`${inputClass('licenses')} appearance-none`}
                   >
                     {licenseOptions.map((opt) => (
@@ -361,13 +369,14 @@ export default function CorporateSection() {
 
                 {/* Message */}
                 <div>
-                  <label className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
+                  <label htmlFor="message" className="block font-sans text-xs text-text-muted uppercase tracking-widest mb-2">
                     Message{' '}
                     <span className="normal-case opacity-50 tracking-normal">
                       (optional)
                     </span>
                   </label>
                   <textarea
+                    id="message"
                     name="message"
                     value={form.message}
                     onChange={handleChange}

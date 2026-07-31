@@ -16,7 +16,7 @@ This monorepo contains two products that share a single Supabase backend:
 |---|---|---|
 | **Supabase** | PostgreSQL database + user auth | anon key (client), service role key (server) |
 | **OneSignal** | Push notifications to the mobile app | REST API key (Edge Function only) |
-| **Stripe** | Executive-tier payment ($500) | Secret key (server-side only) |
+| **Stripe** | Tiered payment — $10 individual / $500 corporate | Secret key (server-side only) |
 | **Resend** | Transactional email (sign-up alerts, corporate inquiries) | API key (server-side only) |
 | **Vercel** | Hosts the Next.js website | — |
 
@@ -151,7 +151,7 @@ Deployed to Vercel. All API routes run as serverless functions.
 ### API routes
 
 #### `POST /api/stripe/checkout`
-Creates a Stripe Checkout session for the Executive tier ($500).
+Creates a Stripe Checkout session. Accepts a `tier` param — `individual` ($10, unit_amount 1000, the default) or `corporate` ($500, unit_amount 50000).
 - Reads `STRIPE_SECRET_KEY`. If not set, returns `{ url: '/setup' }` (graceful no-op for dev).
 - On success, returns `{ url: <stripe_checkout_url> }`. The client redirects to it.
 - Stripe sends a webhook to `/api/stripe/webhook` on payment completion, which sets `profiles.is_paid = true`.
@@ -208,7 +208,7 @@ The website client uses Supabase's **implicit** flow type (configured in `websit
 | `STRIPE_WEBHOOK_SECRET` | `/api/stripe/webhook` | Stripe Dashboard → Webhooks → signing secret |
 | `RESEND_API_KEY` | `/api/notify-signup`, `/api/contact` | Resend Dashboard → API Keys |
 | `NOTIFICATION_EMAIL` | `/api/notify-signup`, `/api/contact` | Your email (comma-separated for multiple) |
-| `NEXT_PUBLIC_SITE_URL` | Stripe redirect URLs | Your production URL, e.g. `https://executivemeditator.com` |
+| `NEXT_PUBLIC_SITE_URL` | Stripe redirect URLs | Your production URL, e.g. `https://www.theexecutivemeditator.com` |
 | `NEXT_PUBLIC_GOOGLE_PLAY_URL` | `/setup/success` download button | Google Play Store listing URL (add once app is live) |
 | `NEXT_PUBLIC_APP_STORE_URL` | `/setup/success` download button | Apple App Store listing URL (add once app is live) |
 
