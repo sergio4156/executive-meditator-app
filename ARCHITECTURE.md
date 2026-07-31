@@ -31,7 +31,7 @@ One row per user. Created automatically via trigger when a user signs up.
 |---|---|---|
 | `user_id` | uuid PK | References `auth.users` |
 | `onesignal_player_id` | text | Device ID for push targeting |
-| `current_week` | smallint 1–3 | Legacy column. Was the source of truth for cadence; now informational only. The Edge Function derives week live from `paid_at` via `deriveWeek()` (see migration `003_add_loop_enabled.sql` era). |
+| `current_week` | smallint 1–3 | Legacy column, now informational only. The program week is derived live from `paid_at` via `deriveWeek()` in [src/utils/weekProgression.ts](src/utils/weekProgression.ts); the Edge Function recomputes it independently for cadence. |
 | `awake_start` | smallint 0–23 | Local hour reminders start |
 | `awake_end` | smallint 0–23 | Local hour reminders stop |
 | `utc_offset_minutes` | integer | Cached timezone offset from UTC. Used as fallback when `time_zone` is null. |
@@ -52,10 +52,11 @@ Run these in order if upgrading an existing schema:
 
 ```
 supabase/schema.sql                     ← full schema (fresh installs)
-supabase/migrations/001_add_schedule_fields.sql
+supabase/migrations/001_add_schedule_fields.sql   ← also DROPs legacy meditation_logs + user_stats
 supabase/migrations/002_add_payment_fields.sql
 supabase/migrations/003_add_loop_enabled.sql
 supabase/migrations/004_add_time_zone.sql
+website/supabase/migrations.sql          ← defines corporate_inquiries (website contact form)
 ```
 
 ---
@@ -120,11 +121,15 @@ Timezone is auto-synced. `getDeviceTimeZone()` (in [src/utils/timezone.ts](src/u
 
 A foreground heartbeat (`startScheduler` in `src/services/scheduler.ts`) is defined to drive alarm-level escalation, but is currently not wired into app lifecycle. Push delivery itself is unaffected — it is fully driven by the `send-reminders` Edge Function.
 
+### Payment gating (paywall)
+
+Access is gated on `profiles.is_paid`. `AppNavigator` routes an authenticated-but-unpaid user to `PaywallScreen`. Purchases happen **only on the website** (Stripe) — the app never processes payment. Per Google Play's Payments policy, the in-app paywall follows the **"reader app" pattern**: it shows no price and does **not** link out to the web checkout; it only states that access is required and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
+
 ### Redux slices
 
 | Slice | State |
 |---|---|
-| `authSlice` | `user`, `loading`, `error`, `isPaid`, `isPaidLoading` |
+| `authSlice` | `user`, `loading`, `error`, `isPaid`, `isPaidLoading`, `paidAt`, `loopEnabled` |
 | `meditationSlice` | `currentWeek`, `alarmLevel` |
 | `notificationSlice` | `fcmPermissionGranted`, `fcmToken`, `notifications`, `unreadCount`, `onboardingComplete`, `awakeStart`, `awakeEnd` |
 
@@ -147,6 +152,10 @@ Deployed to Vercel. All API routes run as serverless functions.
 | `/privacy` | Privacy policy (required by Google Play Store) |
 | `/terms` | Terms of service |
 | `/delete-account` | Public account-deletion instructions page (required by Google Play since 2024) |
+| `/sitemap.xml` | Generated from `src/app/sitemap.ts` — lists indexable pages |
+| `/robots.txt` | Generated from `src/app/robots.ts` — allows crawl, references the sitemap |
+
+**SEO:** indexable pages set a self-referencing canonical to `https://www.theexecutivemeditator.com` via `metadataBase` + `alternates.canonical`. The transactional `/setup` funnel (`/setup`, `/setup/confirmed`, `/setup/success`) is `noindex` via `src/app/setup/layout.tsx`. The apex domain 307-redirects to `www` (the canonical origin).
 
 ### API routes
 
@@ -204,7 +213,7 @@ The website client uses Supabase's **implicit** flow type (configured in `websit
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + server | Supabase → Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only | Supabase → Settings → API |
 | `STRIPE_SECRET_KEY` | `/api/stripe/checkout` | Stripe Dashboard → Developers → API keys |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client (future use) | Stripe Dashboard → Developers → API keys |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Reserved — not currently read by any code | Stripe Dashboard → Developers → API keys |
 | `STRIPE_WEBHOOK_SECRET` | `/api/stripe/webhook` | Stripe Dashboard → Webhooks → signing secret |
 | `RESEND_API_KEY` | `/api/notify-signup`, `/api/contact` | Resend Dashboard → API Keys |
 | `NOTIFICATION_EMAIL` | `/api/notify-signup`, `/api/contact` | Your email (comma-separated for multiple) |

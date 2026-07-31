@@ -1,8 +1,10 @@
 # The Executive Meditator
 
-A cross-platform React Native app (iOS + Android) that guides busy professionals through a progressive micro-meditation program, with compassionate alarms, accumulation tracking, and gamified motivation.
+A React Native mobile app (**Android live**; iOS scaffolded, not yet released) plus a Next.js marketing + purchase website. It guides busy professionals through a **21-day passive micro-meditation program**: instead of long sit-down sessions, the app delivers gently timed push-notification reminders throughout the user's waking hours. When a reminder arrives, the user simply pauses for ~10 seconds — "the Great Silence."
 
-**Backend: Supabase (auth + database) + OneSignal (push notifications)**
+**Backend:** Supabase (Postgres + auth) · OneSignal (push delivery) · a Supabase Edge Function (`send-reminders`) that schedules reminders every 15 minutes · Stripe (payment, on the website) · Resend (transactional email).
+
+> Full system design, data flow, database schema, and environment variables: see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ---
 
@@ -10,19 +12,18 @@ A cross-platform React Native app (iOS + Android) that guides busy professionals
 
 | Feature | Status |
 |---|---|
-| 3-week progressive schedule (60 / 30 / 15 min intervals) | ✅ |
-| 10-second guided meditation with animated countdown | ✅ |
-| Start / Pause / Skip controls | ✅ |
-| Compassionate 4-level alarm system | ✅ |
-| Push notifications (OneSignal) | ✅ |
-| Session logging to Supabase (PostgreSQL) | ✅ |
-| Points, streaks & badge system | ✅ |
-| Lottie "Monad hook-up" animation (placeholder) | ✅ |
-| Progress dashboard with history | ✅ |
-| Email/password + anonymous auth (Supabase) | ✅ |
-| Oneness milestone tracking | ✅ |
-| Payment gating — app locked until purchase on website | ✅ |
-| Wearable integration | 🔜 |
+| 21-day progressive reminder cadence (wk 1 = 60-min, wk 2 = 30-min, wk 3 = 15-min intervals), looping indefinitely | ✅ |
+| Passive practice — pause ~10s when a reminder arrives (no in-app countdown/timer) | ✅ |
+| Push notifications via OneSignal, scheduled server-side by a Supabase Edge Function | ✅ |
+| Timezone- & DST-aware scheduling within each user's awake-hours window | ✅ |
+| Compassionate 4-level alarm escalation for missed sessions | ✅ |
+| Email/password auth (Supabase) | ✅ |
+| Payment gating — app unlocks when `is_paid = true` (purchase happens on the website) | ✅ |
+| Indefinite 21-day loop with an opt-out toggle in Settings | ✅ |
+| Android release (Google Play, under the LLC) | ✅ |
+| iOS release | 🔜 project scaffolded, not yet submitted |
+
+> The in-app paywall follows Google Play's **"reader app"** pattern: it does **not** show a price or link out to the web purchase — it only tells unpaid users they need access and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
 
 ---
 
@@ -30,12 +31,12 @@ A cross-platform React Native app (iOS + Android) that guides busy professionals
 
 - **React Native 0.74** + TypeScript
 - **React Navigation 6** (bottom tabs + native stack)
-- **Redux Toolkit** (auth, meditation, notifications slices)
-- **Supabase** — PostgreSQL database + auth (zero native deps, no CocoaPods pain)
-- **OneSignal 4** — push notifications + scheduled reminders
-- **React Native Reanimated 3** (animated timer ring, progress bar)
-- **Lottie React Native** (completion animation)
-- **Jest + React Native Testing Library**
+- **Redux Toolkit** (`authSlice`, `meditationSlice`, `notificationSlice`)
+- **Supabase** — Postgres database + auth
+- **OneSignal 4.5.1** — push notifications
+- **Jest + React Native Testing Library** — unit tests
+
+> `react-native-reanimated`, `lottie-react-native`, and `react-native-svg` are present in `package.json` but not currently imported anywhere in `src/` (reserved for future UI work).
 
 ---
 
@@ -44,7 +45,7 @@ A cross-platform React Native app (iOS + Android) that guides busy professionals
 ```
 src/
 ├── config/
-│   └── supabase.ts          # Supabase client + table names
+│   └── supabase.ts          # Supabase client (URL + anon key currently hardcoded here)
 ├── store/
 │   ├── index.ts             # Redux store + typed hooks
 │   └── slices/
@@ -52,38 +53,45 @@ src/
 │       ├── meditationSlice.ts
 │       └── notificationSlice.ts
 ├── navigation/
-│   └── AppNavigator.tsx     # Auth stack + main tabs
+│   └── AppNavigator.tsx     # Auth stack + main tabs; drives auth-gated + paywall routing
 ├── screens/
 │   ├── AuthScreen.tsx
-│   ├── PaywallScreen.tsx    # shown when authenticated but not paid
+│   ├── PaywallScreen.tsx    # shown when authenticated but not paid (reader-app pattern)
 │   ├── OnboardingScreen.tsx
 │   ├── HomeScreen.tsx
 │   ├── DashboardScreen.tsx
-│   ├── SettingsScreen.tsx
+│   ├── SettingsScreen.tsx   # awake-hours + loop opt-out toggle
 │   └── NotificationsScreen.tsx
 ├── components/
-│   ├── Card.tsx
-│   ├── MeditationTimer.tsx
-│   ├── ProgressBar.tsx
 │   ├── AlarmCard.tsx
-│   └── BadgeDisplay.tsx
+│   └── Card.tsx
 ├── hooks/
-│   ├── useMeditation.ts     # Countdown + Supabase sync
-│   ├── useDatabase.ts       # Data loading from Supabase
 │   └── useNotifications.ts
 ├── services/
+│   ├── scheduler.ts         # foreground heartbeat (defined; not currently wired to lifecycle)
 │   ├── supabase/
 │   │   ├── auth.ts
 │   │   └── database.ts
 │   └── onesignal/
-│       └── notifications.ts
+│       └── notifications.ts # OneSignal init + player-ID sync (App ID hardcoded here)
 ├── utils/
+│   ├── alarms.ts
 │   ├── meditation.ts
-│   └── alarms.ts
-└── theme/
-    └── index.ts
+│   ├── timezone.ts          # device tz detection + DST-aware sync
+│   └── weekProgression.ts   # deriveWeek() — source of truth for the program week (from paid_at)
+├── theme/
+│   └── index.ts
+└── assets/
+    └── tem-logo.jpg
+
 supabase/
-└── schema.sql               # Run this in Supabase SQL editor
+├── schema.sql               # full schema (fresh installs)
+├── migrations/              # 001–004: schedule fields, payment fields, loop_enabled, time_zone
+└── functions/
+    └── send-reminders/
+        └── index.ts         # Edge Function — schedules reminders every 15 min (Supabase Cron)
+
+website/                     # Next.js marketing + purchase site (see ARCHITECTURE.md)
 ```
 
 ---
@@ -94,34 +102,33 @@ supabase/
 
 ```bash
 npm install
-cd ios && bundle install && bundle exec pod install && cd ..
+cd ios && bundle install && bundle exec pod install && cd ..   # iOS only
 ```
 
-### 2. Supabase setup (5 minutes)
+### 2. Backend configuration
 
-1. Go to [supabase.com](https://supabase.com) → create a free project
-2. Go to **SQL Editor** → paste and run `supabase/schema.sql`
-3. Go to **Settings → API** → copy Project URL and anon key
-4. Copy `.env.example` to `.env` and fill in your values
+- **Mobile app config is currently hardcoded in source** (not read from `.env`): the Supabase URL + anon key live in [src/config/supabase.ts](src/config/supabase.ts), and the OneSignal App ID in [src/services/onesignal/notifications.ts](src/services/onesignal/notifications.ts). The root `.env.example` exists but is not yet wired into the app. Update these constants if forking to your own project.
+- **Supabase schema:** in the Supabase SQL editor, run `supabase/schema.sql`, then the files in `supabase/migrations/` in order (001 → 004). For the website's corporate inquiry form, also run `website/supabase/migrations.sql` (creates the `corporate_inquiries` table).
+- **Edge Function:** deploy `supabase/functions/send-reminders`, set its secrets, and add a 15-minute cron trigger (see ARCHITECTURE.md → "Supabase Edge Function").
+- **Website:** configure `website/.env.local` — the full variable list is in ARCHITECTURE.md → "Environment variables."
 
-### 3. OneSignal setup
-
-1. Go to [onesignal.com](https://onesignal.com) → create a free app
-2. Select **Apple iOS** → follow the APNs certificate steps
-3. Copy your App ID into `.env` as `ONESIGNAL_APP_ID`
-
-### 4. Run
+### 3. Run
 
 ```bash
-# Start Metro bundler
-npm start
-
-# iOS (in a second terminal)
-npm run ios
-
-# Android
-npm run android
+npm start          # Metro bundler
+npm run android    # Android
+# npm run ios      # iOS (scaffolded; not yet released)
 ```
+
+---
+
+## How the Program Works
+
+- When a user pays, `profiles.paid_at` is set (by the Stripe webhook on the website) and the 21-day clock starts.
+- `deriveWeek()` ([src/utils/weekProgression.ts](src/utils/weekProgression.ts)) maps elapsed days to the current week and reminder interval; the `send-reminders` Edge Function recomputes this independently to decide when to push.
+- The program loops indefinitely in 21-day cycles (week 1 → 2 → 3 → 1 → …). After the first cycle, Settings shows a toggle to pause/resume the loop (`profiles.loop_enabled`).
+- Scheduling is timezone- and DST-aware via [src/utils/timezone.ts](src/utils/timezone.ts), re-synced on sign-in and whenever the app returns to the foreground.
+- The app itself does **not** schedule local notifications — all push scheduling is driven server-side by the Edge Function.
 
 ---
 
@@ -138,17 +145,21 @@ All alarms are compassionate and non-punitive.
 
 ---
 
-## Oneness Milestone
+## Testing
 
-Unlocked after 100 total completed sessions (production: ≥ 80% weekly adherence for 3 consecutive weeks). Awards the `oneness` badge, +100 pts, and a persistent banner.
+```bash
+npm test           # Jest + React Native Testing Library
+```
+
+Test suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard).
 
 ---
 
 ## Roadmap
 
+- [ ] iOS App Store release
+- [ ] Wire environment-based config (replace hardcoded Supabase/OneSignal constants)
 - [ ] Apple HealthKit / Google Fit integration
 - [ ] Wearable biofeedback (HRV)
-- [ ] Community features (group streaks, leaderboards)
-- [ ] Custom Lottie Monad animation
-- [ ] Supabase Edge Functions for server-side notification scheduling
+- [ ] Supabase Edge Function enhancements for richer scheduling
 - [ ] Haptic feedback on meditation completion
