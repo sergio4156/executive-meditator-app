@@ -220,6 +220,8 @@ The website client uses Supabase's **implicit** flow type (configured in `websit
 | `NEXT_PUBLIC_SITE_URL` | Stripe redirect URLs | Your production URL, e.g. `https://www.theexecutivemeditator.com` |
 | `NEXT_PUBLIC_GOOGLE_PLAY_URL` | `/setup/success` download button | Google Play Store listing URL (add once app is live) |
 | `NEXT_PUBLIC_APP_STORE_URL` | `/setup/success` download button | Apple App Store listing URL (add once app is live) |
+| `SENTRY_DSN` | Server/edge error monitoring (`src/instrumentation.ts`) | Sentry → Project Settings → Client Keys (DSN). Omit to disable (no-op). |
+| `NEXT_PUBLIC_SENTRY_DSN` | Browser error monitoring (`src/instrumentation-client.ts`) | Same DSN as above. Omit to disable (no-op). |
 
 ---
 

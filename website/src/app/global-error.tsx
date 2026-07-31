@@ -1,0 +1,61 @@
+'use client';
+
+import * as Sentry from '@sentry/nextjs';
+import { useEffect } from 'react';
+
+/**
+ * Catches React rendering errors in the App Router and reports them to Sentry.
+ * Sentry.captureException is a no-op until a DSN is configured, so this is safe
+ * with monitoring disabled.
+ */
+export default function GlobalError({
+  error,
+}: {
+  error: Error & { digest?: string };
+}) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
+  return (
+    <html lang="en">
+      <body
+        style={{
+          margin: 0,
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#0B1220',
+          color: '#FAF7F2',
+          fontFamily: 'Georgia, serif',
+          textAlign: 'center',
+          padding: '24px',
+        }}
+      >
+        <h1 style={{ fontWeight: 300, color: '#C9A84C', marginBottom: 12 }}>
+          Something went wrong
+        </h1>
+        <p style={{ opacity: 0.8, marginBottom: 24 }}>
+          Please refresh the page or try again in a moment.
+        </p>
+        <a
+          href="/"
+          style={{
+            color: '#0B1220',
+            background: '#C9A84C',
+            textDecoration: 'none',
+            padding: '12px 28px',
+            borderRadius: 2,
+            fontSize: 14,
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+          }}
+        >
+          Return Home
+        </a>
+      </body>
+    </html>
+  );
+}
