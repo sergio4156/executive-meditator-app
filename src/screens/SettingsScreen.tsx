@@ -104,7 +104,7 @@ export function SettingsScreen() {
               `Hello,\n\nI would like to request deletion of my Executive Meditator account and all associated data.\n\nAccount email: ${accountEmail}\n\nThank you.`,
             );
             Linking.openURL(
-              `mailto:hillisoralee@gmail.com?subject=${subject}&body=${body}`,
+              `mailto:executivemeditator.llc@gmail.com?subject=${subject}&body=${body}`,
             );
           },
         },
@@ -133,7 +133,9 @@ export function SettingsScreen() {
           <TouchableOpacity
             style={styles.signOutButton}
             onPress={handleSignOut}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out">
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -175,6 +177,8 @@ export function SettingsScreen() {
                 value={loopEnabled}
                 onValueChange={handleToggleLoop}
                 trackColor={{false: theme.colors.border, true: theme.colors.primary}}
+                accessibilityRole="switch"
+                accessibilityState={{checked: loopEnabled}}
                 accessibilityLabel="Continue indefinite loop"
                 accessibilityHint={
                   loopEnabled
@@ -198,6 +202,9 @@ export function SettingsScreen() {
               <View style={styles.stepRow}>
                 <TouchableOpacity
                   style={styles.stepBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease wake-up hour"
                   onPress={() => {
                     const v = Math.max(4, localAwakeStart - 1);
                     setLocalAwakeStart(v);
@@ -209,6 +216,9 @@ export function SettingsScreen() {
                 <Text style={styles.awakeValue}>{fmtHour(localAwakeStart)}</Text>
                 <TouchableOpacity
                   style={styles.stepBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase wake-up hour"
                   onPress={() => {
                     const v = Math.min(localAwakeEnd - 1, localAwakeStart + 1);
                     setLocalAwakeStart(v);
@@ -225,6 +235,9 @@ export function SettingsScreen() {
               <View style={styles.stepRow}>
                 <TouchableOpacity
                   style={styles.stepBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease sleep hour"
                   onPress={() => {
                     const v = Math.max(localAwakeStart + 1, localAwakeEnd - 1);
                     setLocalAwakeEnd(v);
@@ -236,6 +249,9 @@ export function SettingsScreen() {
                 <Text style={styles.awakeValue}>{fmtHour(localAwakeEnd)}</Text>
                 <TouchableOpacity
                   style={styles.stepBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase sleep hour"
                   onPress={() => {
                     const v = Math.min(23, localAwakeEnd + 1);
                     setLocalAwakeEnd(v);

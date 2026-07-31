@@ -33,6 +33,8 @@ export function HomeScreen() {
           <Image
             source={require('@/assets/tem-logo.jpg')}
             style={styles.logo}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
           />
           <Text style={styles.title}>The Executive Meditator</Text>
           <Text style={styles.subtitle}>Your schedule is active</Text>
@@ -58,7 +60,10 @@ export function HomeScreen() {
         {/* Notification status */}
         <Card style={styles.statusCard}>
           <View style={styles.statusRow}>
-            <Text style={styles.statusDot}>
+            <Text
+              style={styles.statusDot}
+              accessibilityElementsHidden={true}
+              importantForAccessibility="no">
               {fcmPermissionGranted ? '🟢' : '🔴'}
             </Text>
             <Text style={styles.statusText}>

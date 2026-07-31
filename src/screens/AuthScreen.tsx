@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 const SUPPORT_MAILTO =
-  'mailto:hillisoralee@gmail.com?subject=Help%20signing%20in';
+  'mailto:executivemeditator.llc@gmail.com?subject=Help%20signing%20in';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {signIn, resetPassword} from '@/services/supabase/auth';
 import {theme} from '@/theme';
@@ -71,7 +71,12 @@ export function AuthScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Logo / title */}
         <View style={styles.header}>
-          <Image source={require('@/assets/tem-logo.jpg')} style={styles.logo} />
+          <Image
+            source={require('@/assets/tem-logo.jpg')}
+            style={styles.logo}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+          />
           <Text style={styles.title}>The Executive Meditator</Text>
           <Text style={styles.subtitle}>Profits · Productivity · Peace</Text>
         </View>
@@ -86,6 +91,7 @@ export function AuthScreen() {
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
+            accessibilityLabel="Email address"
           />
           <View style={styles.passwordContainer}>
             <TextInput
@@ -95,10 +101,13 @@ export function AuthScreen() {
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
+              accessibilityLabel="Password"
             />
             <TouchableOpacity
               onPress={() => setShowPassword(v => !v)}
-              style={styles.eyeButton}>
+              style={styles.eyeButton}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
               <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
             </TouchableOpacity>
           </View>
@@ -107,7 +116,10 @@ export function AuthScreen() {
             style={styles.primaryButton}
             onPress={handleSubmit}
             disabled={loading}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in"
+            accessibilityState={{disabled: loading}}>
             {loading ? (
               <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
@@ -118,7 +130,9 @@ export function AuthScreen() {
           <TouchableOpacity
             onPress={handleForgotPassword}
             style={styles.forgotButton}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Forgot password">
             <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
 

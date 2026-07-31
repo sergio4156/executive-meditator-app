@@ -44,12 +44,18 @@ function HourPicker({
       <View style={styles.pickerRow}>
         <TouchableOpacity
           style={styles.stepBtn}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          accessibilityRole="button"
+          accessibilityLabel={`Decrease ${label}`}
           onPress={() => onChange(Math.max(min, value - 1))}>
           <Text style={styles.stepBtnText}>−</Text>
         </TouchableOpacity>
         <Text style={styles.pickerValue}>{fmt(value)}</Text>
         <TouchableOpacity
           style={styles.stepBtn}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          accessibilityRole="button"
+          accessibilityLabel={`Increase ${label}`}
           onPress={() => onChange(Math.min(max, value + 1))}>
           <Text style={styles.stepBtnText}>+</Text>
         </TouchableOpacity>
@@ -82,6 +88,8 @@ export function OnboardingScreen() {
         <Image
           source={require('@/assets/tem-logo.jpg')}
           style={styles.logo}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no"
         />
 
         <Text style={styles.title}>Welcome to{'\n'}The Executive Meditator</Text>
@@ -144,7 +152,9 @@ export function OnboardingScreen() {
         <TouchableOpacity
           style={styles.continueBtn}
           onPress={handleContinue}
-          activeOpacity={0.85}>
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Begin the journey">
           <Text style={styles.continueBtnText}>Begin the Journey</Text>
         </TouchableOpacity>
       </ScrollView>

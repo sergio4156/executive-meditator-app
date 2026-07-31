@@ -37,14 +37,19 @@ function NotificationItem({notification}: {notification: AppNotification}) {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={() => dispatch(markRead(notification.id))}>
+      onPress={() => dispatch(markRead(notification.id))}
+      accessibilityRole="button"
+      accessibilityLabel={`${notification.read ? '' : 'Unread. '}${notification.title}. ${notification.body}. Tap to mark as read.`}>
       <Card
         style={[
           styles.notifCard,
           ...(notification.read ? [] : [styles.notifCardUnread]),
           {borderLeftColor: borderColor},
         ]}>
-        <Text style={styles.notifIcon}>
+        <Text
+          style={styles.notifIcon}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no">
           {TYPE_ICONS[notification.type]}
         </Text>
         <View style={styles.notifContent}>
@@ -81,12 +86,18 @@ export function NotificationsScreen() {
         </Text>
         <View style={styles.headerActions}>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={() => dispatch(markAllRead())}>
+            <TouchableOpacity
+              onPress={() => dispatch(markAllRead())}
+              accessibilityRole="button"
+              accessibilityLabel="Mark all notifications as read">
               <Text style={styles.actionText}>Mark all read</Text>
             </TouchableOpacity>
           )}
           {notifications.length > 0 && (
-            <TouchableOpacity onPress={() => dispatch(clearNotifications())}>
+            <TouchableOpacity
+              onPress={() => dispatch(clearNotifications())}
+              accessibilityRole="button"
+              accessibilityLabel="Clear all notifications">
               <Text style={[styles.actionText, {color: theme.colors.error}]}>
                 Clear
               </Text>

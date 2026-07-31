@@ -58,7 +58,10 @@ export function DashboardScreen() {
 
         {/* Status */}
         <Card style={styles.statusCard}>
-          <Text style={styles.statusEmoji}>
+          <Text
+            style={styles.statusEmoji}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no">
             {fcmPermissionGranted ? '✅' : '⚠️'}
           </Text>
           <Text style={styles.statusTitle}>

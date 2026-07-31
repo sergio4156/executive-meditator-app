@@ -18,7 +18,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
-const SUPPORT_EMAIL = 'hillisoralee@gmail.com';
+const SUPPORT_EMAIL = 'executivemeditator.llc@gmail.com';
 const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Help%20with%20my%20account`;
 
 export function PaywallScreen() {
@@ -29,6 +29,8 @@ export function PaywallScreen() {
           source={require('@/assets/tem-logo.jpg')}
           style={styles.logo}
           resizeMode="contain"
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no"
         />
 
         <Text style={styles.title}>Executive Meditator</Text>
@@ -57,7 +59,9 @@ export function PaywallScreen() {
         <TouchableOpacity
           style={styles.signOutButton}
           onPress={() => supabase.auth.signOut()}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out of your account">
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>

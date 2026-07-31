@@ -28,6 +28,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 /** Table names — single source of truth */
 export const TABLES = {
   PROFILES: 'profiles',
-  MEDITATION_LOGS: 'meditation_logs',
-  USER_STATS: 'user_stats',
 } as const;
