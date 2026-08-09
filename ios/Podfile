@@ -11,6 +11,17 @@ prepare_react_native_project!
 target 'ExecutiveMeditator' do
   config = use_native_modules!
 
+  # Firebase 10.x ships Swift pods (FirebaseCoreInternal, FirebaseCrashlytics,
+  # FirebaseSessions) that depend on non-modular Google C pods. When building as
+  # static libraries those dependencies must generate module maps. Enable modular
+  # headers ONLY for these pods so RN/OneSignal linkage is unchanged (no use_frameworks!).
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseCoreExtension', :modular_headers => true
+  pod 'FirebaseInstallations', :modular_headers => true
+  pod 'GoogleDataTransport', :modular_headers => true
+  pod 'nanopb', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/.."
