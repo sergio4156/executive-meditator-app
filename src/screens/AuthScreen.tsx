@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 const SUPPORT_MAILTO =
-  'mailto:executivemeditator.llc@gmail.com?subject=Help%20signing%20in';
+  'mailto:admin@theexecutivemeditator.com?subject=Help%20signing%20in';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {signIn, resetPassword} from '@/services/supabase/auth';
 import {theme} from '@/theme';

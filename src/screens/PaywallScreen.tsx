@@ -18,7 +18,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
-const SUPPORT_EMAIL = 'executivemeditator.llc@gmail.com';
+const SUPPORT_EMAIL = 'admin@theexecutivemeditator.com';
 const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Help%20with%20my%20account`;
 
 export function PaywallScreen() {

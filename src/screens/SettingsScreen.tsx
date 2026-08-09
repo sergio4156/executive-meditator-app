@@ -104,7 +104,7 @@ export function SettingsScreen() {
               `Hello,\n\nI would like to request deletion of my Executive Meditator account and all associated data.\n\nAccount email: ${accountEmail}\n\nThank you.`,
             );
             Linking.openURL(
-              `mailto:executivemeditator.llc@gmail.com?subject=${subject}&body=${body}`,
+              `mailto:admin@theexecutivemeditator.com?subject=${subject}&body=${body}`,
             );
           },
         },
