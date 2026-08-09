@@ -149,10 +149,10 @@ export default function TermsPage() {
                 Questions about these Terms may be directed to Executive Meditator
                 LLC at{' '}
                 <a
-                  href="mailto:executivemeditator.llc@gmail.com"
+                  href="mailto:admin@theexecutivemeditator.com"
                   className="text-gold-400 hover:text-gold-300 underline"
                 >
-                  executivemeditator.llc@gmail.com
+                  admin@theexecutivemeditator.com
                 </a>
                 , or by mail at PO Box 587, Cedarville, CA 96104.
               </p>

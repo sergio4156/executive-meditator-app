@@ -124,7 +124,7 @@ async function sendDownloadEmail(email: string) {
   const resend = new Resend(resendApiKey);
   await resend.emails.send({
     from: 'The Executive Meditator <noreply@theexecutivemeditator.com>',
-    replyTo: 'executivemeditator.llc@gmail.com',
+    replyTo: 'admin@theexecutivemeditator.com',
     to: email,
     subject: 'Welcome to The Executive Meditator — download the app',
     html: `
@@ -165,7 +165,7 @@ async function sendDownloadEmail(email: string) {
 
         <p style="font-size: 13px; color: #E8E3DB; opacity: 0.6; line-height: 1.7;">
           Questions? Reply to this email or reach us at
-          <a href="mailto:executivemeditator.llc@gmail.com" style="color: #C4A962;">executivemeditator.llc@gmail.com</a>
+          <a href="mailto:admin@theexecutivemeditator.com" style="color: #C4A962;">admin@theexecutivemeditator.com</a>
         </p>
 
         <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #1B2B4B;">
