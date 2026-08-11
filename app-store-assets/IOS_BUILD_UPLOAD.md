@@ -24,8 +24,9 @@ How to archive + sign + upload the iOS build to App Store Connect from the termi
 ## Credentials (IDs are NOT secret; the .p8 files ARE secret — store in password manager)
 - **Team ID:** 2ZT4C82JS8
 - **App Store Connect API key:** Key ID `6488MA37WP`, Issuer ID `f9073a1f-3c7e-4c0d-8ca1-f60780d79848`,
-  role Admin. File: `AuthKey_6488MA37WP.p8` (downloaded to ~/Downloads — MOVE to secure store).
-- **APNs key** (OneSignal, separate): Key ID `UXWL3JH82L`, `AuthKey_UXWL3JH82L.p8`.
+  role Admin. File stored at `~/Documents/executive-meditator-credentials/AuthKey_6488MA37WP.p8`
+  (outside the repo; also back up in password manager).
+- **APNs key** (OneSignal, separate): Key ID `UXWL3JH82L`, `AuthKey_UXWL3JH82L.p8` (same secure folder).
 - App ID / bundle: com.executivemeditator.app.  ASC app id (Apple ID): 6800176255.
 
 ## Why CLI (not the Xcode GUI Archive)
@@ -53,7 +54,7 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 xcodebuild -exportArchive \
   -archivePath build/ExecutiveMeditator.xcarchive \
   -exportOptionsPlist ../app-store-assets/ios-ExportOptions.plist \
   -allowProvisioningUpdates \
-  -authenticationKeyPath ~/Downloads/AuthKey_6488MA37WP.p8 \
+  -authenticationKeyPath ~/Documents/executive-meditator-credentials/AuthKey_6488MA37WP.p8 \
   -authenticationKeyID 6488MA37WP \
   -authenticationKeyIssuerID f9073a1f-3c7e-4c0d-8ca1-f60780d79848
 ```
