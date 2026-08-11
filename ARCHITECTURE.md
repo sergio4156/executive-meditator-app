@@ -129,7 +129,7 @@ Access is gated on `profiles.is_paid`. `AppNavigator` routes an authenticated-bu
 
 ### Crash reporting
 
-Firebase Crashlytics (`@react-native-firebase/app` + `/crashlytics`) auto-captures native crashes and unhandled JS errors, and uploads the R8/proguard mapping so Play Console crash reports are deobfuscated. Firebase auto-initializes from `google-services.json` (no JS init). It only adds `/app` + `/crashlytics` — not `/messaging` — so it coexists with OneSignal, which still owns push. Free on the Firebase Spark plan. (iOS will additionally need `GoogleService-Info.plist` when that build is set up.)
+Firebase Crashlytics (`@react-native-firebase/app` + `/crashlytics`) auto-captures native crashes and unhandled JS errors, and uploads the R8/proguard mapping so Play Console crash reports are deobfuscated. Firebase auto-initializes from `google-services.json` (no JS init). It only adds `/app` + `/crashlytics` — not `/messaging` — so it coexists with OneSignal, which still owns push. Free on the Firebase Spark plan. On iOS, Firebase initializes from `GoogleService-Info.plist` (at `ios/ExecutiveMeditator/`) via `[FIRApp configure]` in `AppDelegate.mm`.
 
 ### Redux slices
 

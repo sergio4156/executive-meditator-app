@@ -1,6 +1,6 @@
 # The Executive Meditator
 
-A React Native mobile app (**Android live**; iOS scaffolded, not yet released) plus a Next.js marketing + purchase website. It guides busy professionals through a **21-day passive micro-meditation program**: instead of long sit-down sessions, the app delivers gently timed push-notification reminders throughout the user's waking hours. When a reminder arrives, the user simply pauses for ~10 seconds — "the Great Silence."
+A React Native mobile app (**Android live**; iOS configured for App Store, submission in progress) plus a Next.js marketing + purchase website. It guides busy professionals through a **21-day passive micro-meditation program**: instead of long sit-down sessions, the app delivers gently timed push-notification reminders throughout the user's waking hours. When a reminder arrives, the user simply pauses for ~10 seconds — "the Great Silence."
 
 **Backend:** Supabase (Postgres + auth) · OneSignal (push delivery) · a Supabase Edge Function (`send-reminders`) that schedules reminders every 15 minutes · Stripe (payment, on the website) · Resend (transactional email).
 
@@ -21,7 +21,7 @@ A React Native mobile app (**Android live**; iOS scaffolded, not yet released) p
 | Payment gating — app unlocks when `is_paid = true` (purchase happens on the website) | ✅ |
 | Indefinite 21-day loop with an opt-out toggle in Settings | ✅ |
 | Android release (Google Play, under the LLC) | ✅ |
-| iOS release | 🔜 project scaffolded, not yet submitted |
+| iOS release | 🔜 fully configured (Firebase, OneSignal/APNs push, signing, App Store Connect listing); build upload pending |
 
 > The in-app paywall follows Google Play's **"reader app"** pattern: it does **not** show a price or link out to the web purchase — it only tells unpaid users they need access and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
 
@@ -120,7 +120,7 @@ cd ios && bundle install && bundle exec pod install && cd ..   # iOS only
 ```bash
 npm start          # Metro bundler
 npm run android    # Android
-# npm run ios      # iOS (scaffolded; not yet released)
+npm run ios        # iOS (runs in simulator; App Store submission in progress)
 ```
 
 ---
