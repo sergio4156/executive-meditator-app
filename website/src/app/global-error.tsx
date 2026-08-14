@@ -40,6 +40,15 @@ export default function GlobalError({
         <p style={{ opacity: 0.8, marginBottom: 24 }}>
           Please refresh the page or try again in a moment.
         </p>
+        {/*
+          Deliberately a plain <a>, not next/link. global-error.tsx replaces the
+          root layout when the app has crashed, so the router context it renders
+          into is exactly the thing that may be broken. A hard navigation forces
+          a full page load and a clean React tree, which is the recovery we want
+          here — client-side routing could land the user right back in the
+          broken state.
+        */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/"
           style={{
