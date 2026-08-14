@@ -32,6 +32,13 @@ jest.mock('stripe', () => ({
   })),
 }));
 
+// ── Analytics mock ─────────────────────────────────────────────────────────
+// Same specifier the route uses, so both resolve to src/lib/analytics.
+const mockTrackPurchase = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../../../lib/analytics', () => ({
+  trackPurchase: (...args: unknown[]) => mockTrackPurchase(...args),
+}));
+
 import { POST } from '../webhook/route';
 
 function makeCheckoutEvent(overrides: object = {}) {
@@ -150,6 +157,45 @@ describe('POST /api/stripe/webhook', () => {
     expect(res.status).toBe(200);
     expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockSendEmail).not.toHaveBeenCalled();
+  });
+
+  it('reports the purchase to analytics with the amount and currency', async () => {
+    const res = await POST(
+      makeRequest(makeCheckoutEvent({ amount_total: 1000, currency: 'usd' })),
+    );
+    expect(res.status).toBe(200);
+    expect(mockTrackPurchase).toHaveBeenCalledWith({
+      userId: 'uuid-abc',
+      amountMinorUnits: 1000,
+      currency: 'usd',
+    });
+  });
+
+  it('does NOT report the purchase again on a Stripe retry', async () => {
+    // The single most important assertion here: analytics sits AFTER the
+    // idempotency guard. Stripe retries webhooks, and a purchase counted twice
+    // would overstate revenue in a dashboard nobody cross-checks until it is
+    // being shown to someone who matters.
+    mockSelectEq.mockResolvedValue({
+      data: [{ user_id: 'uuid-abc', is_paid: true, stripe_session_id: 'cs_test_123' }],
+      error: null,
+    });
+
+    await POST(makeRequest(makeCheckoutEvent({ amount_total: 1000, currency: 'usd' })));
+
+    expect(mockTrackPurchase).not.toHaveBeenCalled();
+  });
+
+  it('does NOT report a purchase when the DB update fails', async () => {
+    // The webhook 500s so Stripe retries; counting a purchase whose payment we
+    // failed to record would put analytics and the database permanently out of
+    // agreement.
+    mockUpdateEq.mockResolvedValue({ error: { message: 'db down' } });
+
+    const res = await POST(makeRequest(makeCheckoutEvent({ amount_total: 1000 })));
+
+    expect(res.status).toBe(500);
+    expect(mockTrackPurchase).not.toHaveBeenCalled();
   });
 
   it('does not reset paid_at on a duplicate event (no update when already paid)', async () => {
