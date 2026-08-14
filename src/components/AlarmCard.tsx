@@ -52,7 +52,7 @@ const ALARM_CONFIG: Record<Exclude<AlarmLevel, 'none'>, AlarmConfig> = {
 };
 
 export function AlarmCard({level}: Props) {
-  if (level === 'none') return null;
+  if (level === 'none') {return null;}
   const config = ALARM_CONFIG[level];
 
   return (

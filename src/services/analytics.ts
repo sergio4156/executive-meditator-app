@@ -133,7 +133,7 @@ export async function trackWeekReached(uid: string, week: 1 | 2 | 3): Promise<vo
   const key = `${WEEK_MARKER_PREFIX}${uid}`;
   try {
     const last = await AsyncStorage.getItem(key);
-    if (last === String(week)) return;
+    if (last === String(week)) {return;}
     await AsyncStorage.setItem(key, String(week));
     track('program_week_reached', {week});
   } catch {
@@ -152,7 +152,9 @@ export async function trackWeekReached(uid: string, week: 1 | 2 | 3): Promise<vo
 export async function trackPushPermission(
   uid: string,
   granted: boolean,
-  daysEnrolled?: number,
+  // Named to avoid shadowing the exported daysEnrolled() helper below — same
+  // name in the same module reads as a call site when it is really a value.
+  daysSincePaid?: number,
 ): Promise<void> {
   const key = `${PUSH_GRANTED_PREFIX}${uid}`;
   try {
@@ -161,9 +163,12 @@ export async function trackPushPermission(
       return;
     }
     const hadGranted = await AsyncStorage.getItem(key);
-    if (hadGranted !== '1') return;
+    if (hadGranted !== '1') {return;}
     await AsyncStorage.removeItem(key);
-    track('notifications_disabled', daysEnrolled === undefined ? {} : {days_enrolled: daysEnrolled});
+    track(
+      'notifications_disabled',
+      daysSincePaid === undefined ? {} : {days_enrolled: daysSincePaid},
+    );
   } catch {
     // Best-effort.
   }
@@ -183,8 +188,8 @@ export async function clearMarkers(uid: string): Promise<void> {
 
 /** Whole days since payment, or undefined when the user has no paid_at. */
 export function daysEnrolled(paidAt: string | null): number | undefined {
-  if (!paidAt) return undefined;
+  if (!paidAt) {return undefined;}
   const ms = Date.now() - new Date(paidAt).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return 0;
+  if (!Number.isFinite(ms) || ms < 0) {return 0;}
   return Math.floor(ms / 86_400_000);
 }

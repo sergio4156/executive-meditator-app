@@ -219,7 +219,7 @@ export function AppNavigator() {
   const uid = user?.uid;
   const paidAt = useAppSelector(s => s.auth.paidAt);
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {return;}
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
         syncTimeZoneIfChanged(uid).catch(() => {});
@@ -228,7 +228,7 @@ export function AppNavigator() {
         // settings. trackPushPermission only reports the granted → off
         // transition, so users who never opted in are not counted as churn.
         void getPushPermission().then(granted => {
-          if (granted === null) return;
+          if (granted === null) {return;}
           void trackPushPermission(uid, granted, daysEnrolled(paidAt));
         });
       }

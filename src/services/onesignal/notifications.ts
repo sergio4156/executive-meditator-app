@@ -86,7 +86,7 @@ export async function initializeNotifications() {
 export async function getPushPermission(): Promise<boolean | null> {
   try {
     const state: any = await OneSignal.getDeviceState();
-    if (state == null) return null;
+    if (state == null) {return null;}
     return Boolean(state.hasNotificationPermission);
   } catch {
     return null;

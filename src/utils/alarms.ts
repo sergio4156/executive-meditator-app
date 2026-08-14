@@ -10,10 +10,10 @@ import type {AlarmLevel} from '@/store/slices/meditationSlice';
  * @param missedCount - number of consecutive missed sessions
  */
 export function getAlarmLevel(missedCount: number): AlarmLevel {
-  if (missedCount <= 0) return 'none';
-  if (missedCount === 1) return 'subtle';
-  if (missedCount <= 3) return 'mild';
-  if (missedCount <= 6) return 'disease';
+  if (missedCount <= 0) {return 'none';}
+  if (missedCount === 1) {return 'subtle';}
+  if (missedCount <= 3) {return 'mild';}
+  if (missedCount <= 6) {return 'disease';}
   return 'critical';
 }
 

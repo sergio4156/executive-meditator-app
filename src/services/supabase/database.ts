@@ -9,7 +9,7 @@ export async function saveOneSignalId(uid: string, playerId: string) {
       onesignal_player_id: playerId,
       updated_at: new Date().toISOString(),
     });
-  if (error) throw error;
+  if (error) {throw error;}
 }
 
 export async function fetchPaymentStatus(
@@ -20,7 +20,7 @@ export async function fetchPaymentStatus(
     .select('is_paid, paid_at, loop_enabled')
     .eq('user_id', uid)
     .single();
-  if (error) throw error;
+  if (error) {throw error;}
   return {
     isPaid: data?.is_paid === true,
     paidAt: data?.paid_at ?? null,
@@ -33,7 +33,7 @@ export async function updateLoopEnabled(uid: string, enabled: boolean) {
     .from(TABLES.PROFILES)
     .update({loop_enabled: enabled, updated_at: new Date().toISOString()})
     .eq('user_id', uid);
-  if (error) throw error;
+  if (error) {throw error;}
 }
 
 /** @deprecated use fetchPaymentStatus instead */
@@ -61,7 +61,7 @@ export async function syncUserSchedule(
       time_zone: getDeviceTimeZone(),
       updated_at: new Date().toISOString(),
     });
-  if (error) throw error;
+  if (error) {throw error;}
 }
 
 /**
@@ -77,8 +77,8 @@ export async function syncTimeZoneIfChanged(uid: string) {
     .select('time_zone')
     .eq('user_id', uid)
     .single();
-  if (fetchErr) throw fetchErr;
-  if (data?.time_zone === deviceTz) return;
+  if (fetchErr) {throw fetchErr;}
+  if (data?.time_zone === deviceTz) {return;}
 
   const utcOffsetMinutes = -(new Date().getTimezoneOffset());
   const {error} = await supabase
@@ -89,5 +89,5 @@ export async function syncTimeZoneIfChanged(uid: string) {
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', uid);
-  if (error) throw error;
+  if (error) {throw error;}
 }

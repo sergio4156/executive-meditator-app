@@ -49,7 +49,7 @@ export function SettingsScreen() {
 
   const handleToggleLoop = async (next: boolean) => {
     dispatch(setLoopEnabled(next));
-    if (!user?.uid) return;
+    if (!user?.uid) {return;}
     try {
       await updateLoopEnabled(user.uid, next);
       // Only after the write succeeds — an optimistic event that later rolls

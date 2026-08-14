@@ -21,15 +21,15 @@ const CYCLE_DAYS = 21;
 function cycleDay(paidAt: string): number {
   const days = (Date.now() - new Date(paidAt).getTime()) / DAY_MS;
   // Clock skew (paidAt in future) → treat as day 0, not "end of last cycle".
-  if (days < 0) return 0;
+  if (days < 0) {return 0;}
   return days % CYCLE_DAYS;
 }
 
 export function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
-  if (!paidAt) return 1;
+  if (!paidAt) {return 1;}
   const d = cycleDay(paidAt);
-  if (d < 7) return 1;
-  if (d < 14) return 2;
+  if (d < 7) {return 1;}
+  if (d < 14) {return 2;}
   return 3;
 }
 
@@ -38,10 +38,10 @@ export function deriveWeek(paidAt: string | null): 1 | 2 | 3 {
  * number — there's no "final week" because the program loops.
  */
 export function daysUntilNextWeek(paidAt: string | null): number {
-  if (!paidAt) return 7;
+  if (!paidAt) {return 7;}
   const d = cycleDay(paidAt);
-  if (d < 7) return Math.ceil(7 - d);
-  if (d < 14) return Math.ceil(14 - d);
+  if (d < 7) {return Math.ceil(7 - d);}
+  if (d < 14) {return Math.ceil(14 - d);}
   return Math.ceil(CYCLE_DAYS - d);
 }
 
@@ -50,7 +50,7 @@ export function daysUntilNextWeek(paidAt: string | null): number {
  * Drives whether the Settings-screen loop on/off toggle is rendered.
  */
 export function isFirstCycleComplete(paidAt: string | null): boolean {
-  if (!paidAt) return false;
+  if (!paidAt) {return false;}
   const days = (Date.now() - new Date(paidAt).getTime()) / DAY_MS;
   return days >= CYCLE_DAYS;
 }
