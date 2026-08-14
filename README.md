@@ -162,15 +162,22 @@ All alarms are compassionate and non-punitive.
 
 ---
 
-## Testing
+## Testing & linting
 
 ```bash
-npm test           # Jest + React Native Testing Library
+npm test                      # Jest + React Native Testing Library
+npm run lint                  # ESLint
+npx tsc --noEmit              # typecheck
+
+cd website && npm test        # website suite
+cd website && npm run lint    # website ESLint
 ```
 
-Test suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics). The website has its own suite — `cd website && npm test`.
+Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
 
-Counts as of 2026-08-13: **92 root** + **30 website**, all passing, zero type errors in either project.
+Counts as of 2026-08-13: **92 root** + **50 website**, all passing, zero type errors and zero lint errors in either project.
+
+Both ESLint configs disable a rule or two for stated reasons rather than taste — see the comments in [.eslintrc.js](.eslintrc.js) and [website/.eslintrc.json](website/.eslintrc.json) before re-enabling anything. The handful of remaining warnings are left deliberately as real (if minor) issues, so a non-empty lint run means something.
 
 ---
 
