@@ -21,6 +21,8 @@ This monorepo contains two products that share a single Supabase backend:
 | **Vercel** | Hosts the Next.js website | — |
 | **Sentry** | Website error monitoring (server + edge + browser) | DSN (env-gated; `@sentry/nextjs`) |
 | **Firebase Crashlytics** | Mobile crash + JS-error reporting (Android) | `google-services.json` (`@react-native-firebase/crashlytics`) |
+| **Firebase Analytics** | Mobile product analytics — activation, week progression, churn | `google-services.json` (`@react-native-firebase/analytics`) |
+| **GA4 Measurement Protocol** | Server-side `purchase_completed` from the Stripe webhook | `GA4_MEASUREMENT_ID` + `GA4_API_SECRET` (server-side only) |
 
 ---
 
@@ -131,6 +133,31 @@ Access is gated on `profiles.is_paid`. `AppNavigator` routes an authenticated-bu
 
 Firebase Crashlytics (`@react-native-firebase/app` + `/crashlytics`) auto-captures native crashes and unhandled JS errors, and uploads the R8/proguard mapping so Play Console crash reports are deobfuscated. Firebase auto-initializes from `google-services.json` (no JS init). It only adds `/app` + `/crashlytics` — not `/messaging` — so it coexists with OneSignal, which still owns push. Free on the Firebase Spark plan. On iOS, Firebase initializes from `GoogleService-Info.plist` (at `ios/ExecutiveMeditator/`) via `[FIRApp configure]` in `AppDelegate.mm`.
 
+### Product analytics
+
+Firebase Analytics (`@react-native-firebase/analytics`), wrapped by [src/services/analytics.ts](src/services/analytics.ts). Added 2026-08-13, deliberately **before** launch — retention cannot be collected retroactively.
+
+**Retention is NOT app opens.** This product is passive by design: Home says "no action needed here", and a user following the program correctly may never reopen the app. App-open/DAU retention therefore understates it badly and must not be reported as retention. True retention — "still enrolled and still receiving reminders" — is a server-side fact derivable from `profiles.paid_at` + schedule rows, so it is deliberately **not** an event. For the same reason there is no cycle-completion event: it is a pure function of `paid_at >= 21 days` and is queryable for the whole user base at once, including users a client event would never see.
+
+Events (closed TypeScript union — a typo is a type error, not a silently missing metric): `login_completed`, `onboarding_completed` (activation), `program_week_reached`, `reminder_opened`, `notifications_disabled`, `awake_window_changed`, `loop_setting_changed`, `account_deletion_requested`.
+
+Two guards exist because both fail *silently* rather than loudly (covered by `__tests__/services/analytics.test.ts`):
+
+- `program_week_reached` de-dupes per user per week. The week is derived from `paid_at` on every launch, so without the guard the funnel would inflate by however often each user happens to open the app. It keys on a week **change**, not a high-water mark, because the program loops 3 → 1.
+- `notifications_disabled` fires only on the granted → off transition. A user who never opted in has not churned; they never activated.
+
+No PII in event properties — the Supabase user ID is the analytics identifier, never the email.
+
+**⚠️ Android AD_ID trap — re-verify before every Play upload.** `play-services-measurement` declares **three** ad-related permissions under different names: `com.google.android.gms.permission.AD_ID`, `android.permission.ACCESS_ADSERVICES_AD_ID`, and `android.permission.ACCESS_ADSERVICES_ATTRIBUTION`. Our Play Data Safety filing declares **"Advertising ID: No"**, so letting any of them merge in makes that filing false. All three are stripped with `tools:node="remove"` in [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml), plus `google_analytics_adid_collection_enabled=false` in `strings.xml`. Verify with:
+
+```bash
+grep -E "AD_ID|ADSERVICES" android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+```
+
+It must return nothing. Removing only the GMS permission is **not** sufficient.
+
+**Website:** no browser analytics tag is installed, deliberately — that would mean cookies and a consent-banner obligation across the 175 listed countries. `purchase_completed` is sent server-side from the Stripe webhook via the GA4 Measurement Protocol ([website/src/lib/analytics.ts](website/src/lib/analytics.ts)), after the idempotency guard, so a Stripe retry cannot double-count revenue. It no-ops when `GA4_MEASUREMENT_ID`/`GA4_API_SECRET` are unset and can never throw — a measurement failure must not fail a payment.
+
 ### Redux slices
 
 | Slice | State |
@@ -234,6 +261,8 @@ The website client uses Supabase's **implicit** flow type (configured in `websit
 | `NEXT_PUBLIC_APP_STORE_URL` | `/setup/success` download button | Apple App Store listing URL (add once app is live) |
 | `SENTRY_DSN` | Server/edge error monitoring (`src/instrumentation.ts`) | Sentry → Project Settings → Client Keys (DSN). Omit to disable (no-op). |
 | `NEXT_PUBLIC_SENTRY_DSN` | Browser error monitoring (`src/instrumentation-client.ts`) | Same DSN as above. Omit to disable (no-op). |
+| `GA4_MEASUREMENT_ID` | Server-side `purchase_completed` (`src/lib/analytics.ts`) | GA4 → Admin → Data Streams → web stream (`G-…`). Omit to disable (no-op). |
+| `GA4_API_SECRET` | Same | GA4 → that stream → Measurement Protocol API secrets → Create. **Secret** — server-side only. |
 
 ---
 

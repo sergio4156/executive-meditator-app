@@ -1,6 +1,6 @@
 # The Executive Meditator
 
-A React Native mobile app (**Android live**; iOS configured for App Store, submission in progress) plus a Next.js marketing + purchase website. It guides busy professionals through a **21-day passive micro-meditation program**: instead of long sit-down sessions, the app delivers gently timed push-notification reminders throughout the user's waking hours. When a reminder arrives, the user simply pauses for ~10 seconds — "the Great Silence."
+A React Native mobile app (**both platforms submitted, neither publicly launched** — see Release status below) plus a Next.js marketing + purchase website. It guides busy professionals through a **21-day passive micro-meditation program**: instead of long sit-down sessions, the app delivers gently timed push-notification reminders throughout the user's waking hours. When a reminder arrives, the user simply pauses for ~10 seconds — "the Great Silence."
 
 **Backend:** Supabase (Postgres + auth) · OneSignal (push delivery) · a Supabase Edge Function (`send-reminders`) that schedules reminders every 15 minutes · Stripe (payment, on the website) · Resend (transactional email).
 
@@ -20,10 +20,22 @@ A React Native mobile app (**Android live**; iOS configured for App Store, submi
 | Email/password auth (Supabase) | ✅ |
 | Payment gating — app unlocks when `is_paid = true` (purchase happens on the website) | ✅ |
 | Indefinite 21-day loop with an opt-out toggle in Settings | ✅ |
-| Android release (Google Play, under the LLC) | ✅ |
-| iOS release | 🔜 fully configured (Firebase, OneSignal/APNs push, signing, App Store Connect listing); build upload pending |
+| Product analytics — activation, week progression, churn (Firebase Analytics) | ✅ |
 
 > The in-app paywall follows Google Play's **"reader app"** pattern: it does **not** show a price or link out to the web purchase — it only tells unpaid users they need access and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
+
+---
+
+## Release status (as of 2026-08-13)
+
+Neither store is publicly live yet. Both are submitted and waiting.
+
+| Platform | State | Detail |
+|---|---|---|
+| **Apple App Store** | ⏳ In review | Build `1.0 (1)` submitted 2026-08-11. **Manual release** — approval does not publish; we choose the date. |
+| **Google Play** | ⏳ In review | Closed-testing release `10 (1.0.8)` submitted 2026-08-13 with 12 enrolled testers. Google states review takes up to 7 days, then a mandatory **14-day** closed test must complete before "Apply for production" unlocks. |
+
+Build runbooks: **iOS** → [app-store-assets/IOS_BUILD_UPLOAD.md](app-store-assets/IOS_BUILD_UPLOAD.md) · **Android** → [play-store-assets/ANDROID_RELEASE.md](play-store-assets/ANDROID_RELEASE.md)
 
 ---
 
@@ -35,6 +47,7 @@ A React Native mobile app (**Android live**; iOS configured for App Store, submi
 - **Supabase** — Postgres database + auth
 - **OneSignal 4.5.1** — push notifications
 - **Firebase Crashlytics** (`@react-native-firebase`) — crash + JS-error reporting
+- **Firebase Analytics** (`@react-native-firebase/analytics`) — product analytics; see [ARCHITECTURE.md](ARCHITECTURE.md) → "Product analytics"
 - **Jest + React Native Testing Library** — unit tests
 
 (The website separately uses **Sentry** for error monitoring — see [ARCHITECTURE.md](ARCHITECTURE.md).)
@@ -71,6 +84,7 @@ src/
 ├── hooks/
 │   └── useNotifications.ts
 ├── services/
+│   ├── analytics.ts         # product analytics wrapper — typed events + de-dupe guards
 │   ├── scheduler.ts         # foreground heartbeat (defined; not currently wired to lifecycle)
 │   ├── supabase/
 │   │   ├── auth.ts
@@ -154,13 +168,17 @@ All alarms are compassionate and non-punitive.
 npm test           # Jest + React Native Testing Library
 ```
 
-Test suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard).
+Test suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics). The website has its own suite — `cd website && npm test`.
+
+Counts as of 2026-08-13: **92 root** + **30 website**, all passing, zero type errors in either project.
 
 ---
 
 ## Roadmap
 
-- [ ] iOS App Store release
+- [ ] iOS App Store release (submitted — awaiting Apple)
+- [ ] Google Play production release (closed test in review; 14-day test period still to run)
+- [ ] **Raise `IPHONEOS_DEPLOYMENT_TARGET` 13.4 → 15.0** — Apple rejects uploads below 15.0 from **Spring 2027** (`ITMS-90068`). Drops iOS 13/14 devices, so it is a deliberate call; revisit ~Nov 2026.
 - [ ] Wire environment-based config (replace hardcoded Supabase/OneSignal constants)
 - [ ] Apple HealthKit / Google Fit integration
 - [ ] Wearable biofeedback (HRV)

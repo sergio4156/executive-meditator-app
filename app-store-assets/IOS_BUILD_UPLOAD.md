@@ -3,34 +3,49 @@
 How to archive + sign + upload the iOS build to App Store Connect from the terminal
 (the Xcode GUI's automatic signing fails on this account — see "Why" below).
 
-## ⛔ BLOCKERS as of 2026-08-11 (must fix before upload succeeds)
-1. **Xcode too old — THE ONLY REMAINING MANUAL STEP.**
-   - ✅ macOS is now **Tahoe 26.6.1** (was the prerequisite for Xcode 26).
-   - 🔴 Xcode is still **16.2**, and it no longer runs at all on macOS 26 — `xcodebuild`, `otool`,
-     and every `xcrun` shim fail with `dlopen(libxcodebuildLoader.dylib): Symbol not found: _XPCTypeBool`.
-     There is **no toolchain on this machine right now**; nothing iOS can be built or inspected until
-     Xcode 26 is installed.
-   - **Fix: install Xcode 26** — Mac App Store (search "Xcode" → Update/Get) or
-     developer.apple.com/download (sign in with the LLC Apple ID → Xcode 26 .xip).
-     ~12 GB download, ~35 GB installed; 86 GB free as of 2026-08-11, so space is fine.
-   - After installing:
-     ```
-     sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-     sudo xcodebuild -license accept
-     xcodebuild -version            # expect 26.x
-     cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
-     ```
-2. **Bitcode in OneSignal.** `OneSignalXCFramework 3.12.4` ships bitcode; Apple rejects it
-   ("Invalid Executable ... contains bitcode").
-   - ✅ **SOLVED — script ready:** `app-store-assets/ios-strip-bitcode.sh` strips bitcode from every
-     embedded framework in the built archive. Run it between step 1 and step 2 below. No pbxproj or
-     Podfile changes needed, and it's a no-op on frameworks that are already clean.
-   - Alternative (NOT recommended pre-launch): upgrade react-native-onesignal to 5.x — breaking
-     migration, and Android is live on the current version.
-3. **⚠️ Watch for: OneSignal 3.12.4 may not compile under Xcode 26.** It is an old SDK whose device
-   slice is `ios-arm64_armv7_armv7s` (armv7 era). If `pod install` or the archive fails on OneSignal
-   under the new toolchain, the fallback is the react-native-onesignal 5.x upgrade. Unknown until
-   Xcode 26 is installed — this is the main residual risk in the build.
+## ✅ STATUS: build `1.0 (1)` uploaded 2026-08-11, "Ready to Submit", submitted to App Review
+This runbook worked end to end. Below is what actually blocked it and how each resolved — keep it,
+because the environment problems recur on any new machine or Xcode upgrade.
+
+### Environment setup (one-time per machine)
+1. **Xcode 26 + macOS 26.** The App Store install of Xcode 26.6 was not sufficient on its own; it
+   left two traps:
+   - **The license was never accepted**, so Xcode.app aborted on launch (`Abort trap: 6`) and its
+     first-launch task never ran. The crash report's `asi` field says so verbatim — a GUI that dies
+     instantly with no dialog is *usually* this.
+   - Because first launch never ran, `/Library/Developer/PrivateFrameworks/CoreDevice.framework`
+     stayed at pkg version **16.2** and could not link macOS 26's Mercury framework, producing
+     `dlopen(libxcodebuildLoader.dylib): Symbol not found: _XPCTypeBool` on `xcodebuild`, `otool`
+     and every `xcrun` shim.
+
+   **Fix (needs your password — an agent cannot sudo):**
+   ```
+   sudo xcodebuild -license accept
+   sudo xcodebuild -runFirstLaunch
+   ```
+2. **The iOS platform is a separate ~8.5 GB download.** App Store Xcode ships the SDK but not the
+   platform bundle (`iPhoneOS.platform` was a 156 MB stub), so `ibtool` failed the archive with
+   `LaunchScreen.storyboard: error: iOS 26.5 Platform Not Installed`. No sudo needed:
+   ```
+   xcodebuild -downloadPlatform iOS
+   ```
+   This also installs the iOS Simulator runtime used for App Store screenshots.
+
+### Build-content notes
+3. **Bitcode must be stripped.** `app-store-assets/ios-strip-bitcode.sh` handles it, over *every*
+   embedded framework rather than a hardcoded list — **`hermes.framework` carried bitcode too**, and
+   an OneSignal-only loop would have missed it and been rejected. Verified afterwards: 0 `__LLVM`
+   segments, arm64 intact.
+4. **OneSignal 3.12.4 under Xcode 26: NON-ISSUE.** It compiled and linked fine. The feared 5.x
+   migration was not needed — do **not** upgrade it pre-emptively.
+
+### Known upload warnings (both benign for now)
+- `ITMS-90738` — empty `NSLocationWhenInUseUsageDescription`. **Fixed** (commit `0f73d383`) by
+  deleting the key; the app never uses location, so no purpose string was invented.
+- `ITMS-90068` — `MinimumOSVersion` 13.4. **Deliberately deferred.** Apple blocks uploads below
+  15.0 from **Spring 2027**; bumping now would drop iOS 13/14 devices. Revisit ~Nov 2026.
+- dSYMs missing for the OneSignal frameworks and hermes — third-party prebuilt binaries ship none.
+  Costs crash symbolication for those frameworks only.
 
 ## Credentials (IDs are NOT secret; the .p8 files ARE secret — store in password manager)
 - **Team ID:** 2ZT4C82JS8
@@ -58,7 +73,7 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 xcodebuild \
   -archivePath build/ExecutiveMeditator.xcarchive \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO archive
 
-# 1b) STRIP BITCODE from the archive's embedded frameworks (blocker #2) — required before export
+# 1b) STRIP BITCODE from the archive's embedded frameworks — required before export
 ../app-store-assets/ios-strip-bitcode.sh
 
 # 2) Export + upload (creates Apple Distribution cert + App Store profile via the API key, no device)
