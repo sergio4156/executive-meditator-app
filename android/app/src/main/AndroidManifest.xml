@@ -1,6 +1,45 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      Firebase Analytics (play-services-measurement) declares the AD_ID permission
+      in its own manifest, which would merge into this app automatically.
+
+      We do not run ads and our Play Data Safety declaration states we do NOT
+      collect an Advertising ID. Letting that permission merge in would make the
+      filed declaration false, which is a policy violation.
+
+      Strip it here, and keep ad-ID collection off in analytics config (see
+      google_analytics_adid_collection_enabled in strings.xml). Verify with:
+        grep AD_ID android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+      It must return nothing before any Play upload.
+    -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+
+    <!--
+      play-services-measurement-api also declares the Privacy Sandbox AdServices
+      permissions, which are DIFFERENT strings from the GMS one above and are not
+      covered by removing it. Verified via
+      android/app/build/outputs/logs/manifest-merger-release-report.txt.
+
+      ACCESS_ADSERVICES_AD_ID grants access to the advertising identifier through
+      the AdServices API — declaring it would contradict our "Advertising ID: No"
+      filing just as surely as the GMS permission would.
+
+      ACCESS_ADSERVICES_ATTRIBUTION is for ad attribution reporting. We run no ads
+      and do no attribution, so the permission is unused; leaving it in would
+      advertise a capability we neither use nor declare.
+    -->
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
 
     <application
       android:name=".MainApplication"

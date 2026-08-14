@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">The Executive Meditator</string>
+
+    <!--
+      Keep Firebase Analytics off the Advertising ID. Paired with the AD_ID
+      permission removal in AndroidManifest.xml — the manifest strip removes the
+      declaration, this stops the SDK collecting the value. Both are required to
+      keep our Play Data Safety filing ("Advertising ID: No") accurate.
+    -->
+    <bool name="google_analytics_adid_collection_enabled">false</bool>
 </resources>

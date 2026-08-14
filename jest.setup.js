@@ -39,6 +39,24 @@ jest.mock('react-native-onesignal', () => ({
   },
 }));
 
+// Mock @react-native-firebase/analytics.
+// The module is a function returning the analytics instance, so the mock has to
+// be callable — `analytics().logEvent(...)`. Exposed on globalThis so tests can
+// assert which events fired without re-mocking in every file.
+global.__analyticsMock = {
+  logEvent: jest.fn(() => Promise.resolve()),
+  setUserId: jest.fn(() => Promise.resolve()),
+};
+jest.mock('@react-native-firebase/analytics', () => ({
+  __esModule: true,
+  default: () => global.__analyticsMock,
+}));
+
+// Mock AsyncStorage — the analytics de-dupe markers depend on it.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 // Mock Lottie
 jest.mock('lottie-react-native', () => 'LottieView');
 

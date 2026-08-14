@@ -8,6 +8,7 @@ import {store} from '@/store';
 import {setFcmPermission, setFcmToken, addNotification} from '@/store/slices/notificationSlice';
 import {setAlarmLevel} from '@/store/slices/meditationSlice';
 import {saveOneSignalId} from '@/services/supabase/database';
+import {track} from '@/services/analytics';
 import {supabase} from '@/config/supabase';
 import type {AlarmLevel} from '@/store/slices/meditationSlice';
 
@@ -66,7 +67,30 @@ export async function initializeNotifications() {
 
   OneSignal.setNotificationOpenedHandler((_openedEvent: any) => {
     acknowledgeReminder();
+    // DIAGNOSTIC, not a success metric. The intended behaviour when a reminder
+    // arrives is to pause where you are and NOT touch the phone, so a low tap
+    // rate is consistent with the product working exactly as designed. Useful
+    // for spotting a sudden drop (delivery broken); misleading as "engagement".
+    track('reminder_opened', {week: store.getState().meditation.currentWeek});
   });
+}
+
+/**
+ * Current push permission as OneSignal sees it.
+ *
+ * Read on foreground rather than trusted from the prompt response: the prompt
+ * only fires once, and the interesting case is a user revoking permission in OS
+ * settings weeks later — which is our earliest churn signal and is invisible
+ * from inside the app unless we look.
+ */
+export async function getPushPermission(): Promise<boolean | null> {
+  try {
+    const state: any = await OneSignal.getDeviceState();
+    if (state == null) return null;
+    return Boolean(state.hasNotificationPermission);
+  } catch {
+    return null;
+  }
 }
 
 /**

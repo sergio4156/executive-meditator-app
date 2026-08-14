@@ -4,7 +4,7 @@
  * Unauthenticated → AuthStack
  * Authenticated   → MainTabs (Home, Dashboard, Notifications, Settings)
  */
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ActivityIndicator, AppState, View, StyleSheet, Text, Image} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,9 +17,18 @@ import {setUser, setLoading, setIsPaid, setPaidAt, setLoopEnabled} from '@/store
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
 import {fetchPaymentStatus, syncTimeZoneIfChanged} from '@/services/supabase/database';
-import {syncOneSignalIdForUser} from '@/services/onesignal/notifications';
+import {syncOneSignalIdForUser, getPushPermission} from '@/services/onesignal/notifications';
 import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {deriveWeek} from '@/utils/weekProgression';
+import {
+  track,
+  identify,
+  resetIdentity,
+  clearMarkers,
+  trackWeekReached,
+  trackPushPermission,
+  daysEnrolled,
+} from '@/services/analytics';
 import {theme} from '@/theme';
 
 import {HomeScreen} from '@/screens/HomeScreen';
@@ -90,6 +99,11 @@ export function AppNavigator() {
   const {user, loading, isPaid} = useAppSelector(s => s.auth);
   const onboardingComplete = useAppSelector(s => s.notifications.onboardingComplete);
 
+  // The auth subscription below is created once (deps: [dispatch]), so reading
+  // `user` inside it would capture the mount-time value — always null. A ref
+  // gives the sign-out branch the uid that was actually signed in.
+  const signedInUidRef = useRef<string | null>(null);
+
   // Rehydrate onboarding state from AsyncStorage on boot
   useEffect(() => {
     AsyncStorage.getItem('onboarding').then(raw => {
@@ -121,6 +135,12 @@ export function AppNavigator() {
         );
         syncOneSignalIdForUser(uid);
 
+        // Bind analytics to the account before any event fires, so the
+        // activation funnel can be joined to the purchase record.
+        signedInUidRef.current = uid;
+        identify(uid);
+        track('login_completed');
+
         // Hydrate isPaid + paidAt from cache so the navigator can render
         // immediately, then refresh from the backend in the background.
         const [cachedPaid, rawCachedPaidAt] = await Promise.all([
@@ -141,6 +161,13 @@ export function AppNavigator() {
             dispatch(setCurrentWeek(deriveWeek(paidAt)));
             AsyncStorage.setItem(`isPaid:${uid}`, isPaid ? '1' : '0').catch(() => {});
             AsyncStorage.setItem(`paidAt:${uid}`, paidAt ?? '').catch(() => {});
+
+            // Report week progression off the AUTHORITATIVE paid_at, not the
+            // cached one — a stale cache would attribute the wrong week.
+            // trackWeekReached de-dupes, so this is safe on every launch.
+            if (isPaid && paidAt) {
+              void trackWeekReached(uid, deriveWeek(paidAt));
+            }
           })
           .catch(() => {
             // Keep cached values on failure
@@ -165,6 +192,15 @@ export function AppNavigator() {
           // Storage cleanup is best-effort; don't block sign-out
         }
 
+        // Unbind analytics before clearing the user, so nothing that happens
+        // next is attributed to the account that just signed out.
+        const previousUid = signedInUidRef.current;
+        if (previousUid) {
+          void clearMarkers(previousUid);
+        }
+        signedInUidRef.current = null;
+        resetIdentity();
+
         dispatch(setUser(null));
         dispatch(setIsPaid(false));
         dispatch(setPaidAt(null));
@@ -181,15 +217,24 @@ export function AppNavigator() {
   // Re-sync the user's tz whenever the app comes back to the foreground —
   // catches travelers who fly across time zones without restarting the app.
   const uid = user?.uid;
+  const paidAt = useAppSelector(s => s.auth.paidAt);
   useEffect(() => {
     if (!uid) return;
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
         syncTimeZoneIfChanged(uid).catch(() => {});
+
+        // Foreground is our only chance to notice permission revoked in OS
+        // settings. trackPushPermission only reports the granted → off
+        // transition, so users who never opted in are not counted as churn.
+        void getPushPermission().then(granted => {
+          if (granted === null) return;
+          void trackPushPermission(uid, granted, daysEnrolled(paidAt));
+        });
       }
     });
     return () => sub.remove();
-  }, [uid]);
+  }, [uid, paidAt]);
 
   if (loading) {
     return (

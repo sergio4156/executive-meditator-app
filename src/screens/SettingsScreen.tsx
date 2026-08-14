@@ -20,6 +20,7 @@ import {completeOnboarding, resetOnboarding} from '@/store/slices/notificationSl
 import {setLoopEnabled} from '@/store/slices/authSlice';
 import {signOut} from '@/services/supabase/auth';
 import {syncUserSchedule, updateLoopEnabled} from '@/services/supabase/database';
+import {track, daysEnrolled} from '@/services/analytics';
 import {supabase} from '@/config/supabase';
 import {Card} from '@/components/Card';
 import {theme} from '@/theme';
@@ -51,6 +52,9 @@ export function SettingsScreen() {
     if (!user?.uid) return;
     try {
       await updateLoopEnabled(user.uid, next);
+      // Only after the write succeeds — an optimistic event that later rolls
+      // back would overstate voluntary continuation past the first cycle.
+      track('loop_setting_changed', {enabled: next});
     } catch (err) {
       // Roll back optimistic update on failure
       dispatch(setLoopEnabled(!next));
@@ -71,6 +75,9 @@ export function SettingsScreen() {
     if (uid) {
       syncUserSchedule(uid, week, start, end).catch(console.warn);
     }
+    // Distinguishes users tuning the window to fit their day from users
+    // narrowing it toward zero, which is churn wearing a different hat.
+    track('awake_window_changed', {awake_window_hours: end - start});
   };
 
   const handleSignOut = () => {
@@ -98,6 +105,9 @@ export function SettingsScreen() {
           text: 'Send Request',
           style: 'destructive',
           onPress: () => {
+            track('account_deletion_requested', {
+              days_enrolled: daysEnrolled(paidAt),
+            });
             const accountEmail = user?.email ?? '[your account email]';
             const subject = encodeURIComponent('Account deletion request');
             const body = encodeURIComponent(

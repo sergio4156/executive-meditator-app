@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAppDispatch} from '@/store';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {syncUserSchedule} from '@/services/supabase/database';
+import {track} from '@/services/analytics';
 import {supabase} from '@/config/supabase';
 import {theme} from '@/theme';
 
@@ -78,6 +79,10 @@ export function OnboardingScreen() {
     if (uid) {
       syncUserSchedule(uid, 1, awakeStart, awakeEnd).catch(console.warn);
     }
+
+    // THE activation event: the denominator for every progression metric.
+    // A purchaser who never reaches here bought but never started.
+    track('onboarding_completed', {awake_window_hours: awakeEnd - awakeStart});
   };
 
   const totalHours = awakeEnd - awakeStart;

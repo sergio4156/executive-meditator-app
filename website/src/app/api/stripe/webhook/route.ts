@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
+// Relative, not '@/lib/...': the repo-root jest config maps '@/' to the MOBILE
+// src/ directory, so an alias here resolves to the wrong package when the root
+// test run picks up this file.
+import { trackPurchase } from '../../../../lib/analytics';
 
 export async function POST(request: NextRequest) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -95,6 +99,14 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Payment confirmed for user ${profile.user_id} (${email ?? 'no email'})`);
+
+    // Sits after the idempotency guard above, so a Stripe retry cannot
+    // double-count revenue. Awaited but never able to throw — see lib/analytics.
+    await trackPurchase({
+      userId: profile.user_id,
+      amountMinorUnits: session.amount_total,
+      currency: session.currency,
+    });
 
     // Send the welcome/download email. The payment is already recorded, so a mail
     // failure must not fail the webhook (that would trigger a retry; idempotency
