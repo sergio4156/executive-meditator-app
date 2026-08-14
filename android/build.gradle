@@ -1,9 +1,11 @@
 buildscript {
     ext {
-        buildToolsVersion = "35.0.0"
+        // Google Play requires target API 36 for uploads from 2026-08-31.
+        // minSdk stays at 23 — raising the target does not drop older devices.
+        buildToolsVersion = "36.1.0"
         minSdkVersion = 23
-        compileSdkVersion = 35
-        targetSdkVersion = 35
+        compileSdkVersion = 36
+        targetSdkVersion = 36
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.22"
     }
