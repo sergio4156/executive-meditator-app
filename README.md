@@ -175,7 +175,9 @@ cd website && npm run lint    # website ESLint
 
 Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
 
-Counts as of 2026-08-13: **92 root** + **50 website**, all passing, zero type errors and zero lint errors in either project.
+**The two commands overlap — don't add their totals together.** The repo-root `npm test` runs *everything*, because the root Jest config also picks up `website/src/**/__tests__`. The website command runs a subset, useful when you only care about that project.
+
+Counts as of 2026-08-13: **112 tests total** (62 mobile + 50 website) across 11 suites, all passing, with zero type errors and zero lint errors in either project.
 
 Both ESLint configs disable a rule or two for stated reasons rather than taste — see the comments in [.eslintrc.js](.eslintrc.js) and [website/.eslintrc.json](website/.eslintrc.json) before re-enabling anything. The handful of remaining warnings are left deliberately as real (if minor) issues, so a non-empty lint run means something.
 
