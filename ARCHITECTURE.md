@@ -188,7 +188,16 @@ Deployed to Vercel. All API routes run as serverless functions.
 | `/sitemap.xml` | Generated from `src/app/sitemap.ts` — lists indexable pages |
 | `/robots.txt` | Generated from `src/app/robots.ts` — allows crawl, references the sitemap |
 
-**SEO:** indexable pages set a self-referencing canonical to `https://www.theexecutivemeditator.com` via `metadataBase` + `alternates.canonical`. The transactional `/setup` funnel (`/setup`, `/setup/confirmed`, `/setup/success`) is `noindex` via `src/app/setup/layout.tsx`. The apex domain 307-redirects to `www` (the canonical origin).
+**SEO:** the four content pages (`/`, `/privacy`, `/terms`, `/delete-account`) set a self-referencing canonical to `https://www.theexecutivemeditator.com` via `metadataBase` + `alternates.canonical`, and are the only URLs in the sitemap. The apex domain 307-redirects to `www` (the canonical origin).
+
+Two transactional route groups are `noindex`, each via a layout:
+
+| Group | Layout | Why |
+|---|---|---|
+| `/setup`, `/setup/confirmed`, `/setup/success` | `src/app/setup/layout.tsx` | Signup funnel; avoids "Duplicate without canonical" and "Page with redirect" reports |
+| `/auth/callback`, `/auth/reset-password` | `src/app/auth/layout.tsx` | Transient handlers — one consumes a single-use code, the other is reached from an emailed link. An indexed reset-password page is a confusing search result. |
+
+⚠️ **Do NOT also `Disallow` these paths in `robots.ts`.** Crawling must stay allowed so Googlebot can actually read the `noindex` directive — blocking the crawl is the classic mistake that leaves pages indexed forever.
 
 ### API routes
 

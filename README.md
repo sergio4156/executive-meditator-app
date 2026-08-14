@@ -134,7 +134,7 @@ cd ios && bundle install && bundle exec pod install && cd ..   # iOS only
 ```bash
 npm start          # Metro bundler
 npm run android    # Android
-npm run ios        # iOS (runs in simulator; App Store submission in progress)
+npm run ios        # iOS simulator (see Release status above for store state)
 ```
 
 ---
