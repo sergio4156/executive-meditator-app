@@ -12,18 +12,48 @@ export async function saveOneSignalId(uid: string, playerId: string) {
   if (error) {throw error;}
 }
 
-export async function fetchPaymentStatus(
-  uid: string,
-): Promise<{isPaid: boolean; paidAt: string | null; loopEnabled: boolean}> {
+/**
+ * Whether a subscription is currently active.
+ *
+ * Access is `access_expires_at > now()`, NOT `is_paid`. Since the move to a
+ * recurring subscription, is_paid only means "has ever paid" — a lapsed
+ * subscriber still has it set, so relying on it would hand free access to
+ * everyone who cancelled.
+ *
+ * A null expiry means no access: rows predating the subscription model were
+ * backfilled to 2099 by migration 005, so null now only occurs on profiles
+ * that never had access at all.
+ */
+export function hasActiveAccess(accessExpiresAt: string | null): boolean {
+  if (!accessExpiresAt) {return false;}
+  const expiry = new Date(accessExpiresAt).getTime();
+  // An unparseable date must not grant access — fail closed.
+  if (!Number.isFinite(expiry)) {return false;}
+  return expiry > Date.now();
+}
+
+export async function fetchPaymentStatus(uid: string): Promise<{
+  isPaid: boolean;
+  paidAt: string | null;
+  accessExpiresAt: string | null;
+  loopEnabled: boolean;
+}> {
   const {data, error} = await supabase
     .from(TABLES.PROFILES)
-    .select('is_paid, paid_at, loop_enabled')
+    .select('is_paid, paid_at, access_expires_at, loop_enabled')
     .eq('user_id', uid)
     .single();
   if (error) {throw error;}
+
+  const accessExpiresAt = data?.access_expires_at ?? null;
   return {
-    isPaid: data?.is_paid === true,
+    // `isPaid` now answers "may this user in the app right now", which is what
+    // every caller actually wanted. The name is kept so the paywall routing in
+    // AppNavigator and the cached AsyncStorage key do not have to change.
+    isPaid: hasActiveAccess(accessExpiresAt),
+    // First purchase — anchors the program week. Unchanged by renewals.
     paidAt: data?.paid_at ?? null,
+    accessExpiresAt,
     loopEnabled: data?.loop_enabled !== false,
   };
 }

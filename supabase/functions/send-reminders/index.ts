@@ -98,13 +98,23 @@ serve(async (_req) => {
     const now = new Date();
     const utcMinutesOfDay = now.getUTCHours() * 60 + now.getUTCMinutes();
 
-    // Fetch all paid users who have a registered device
+    // Fetch users with an ACTIVE subscription and a registered device.
+    //
+    // `is_paid` alone is not enough since the move to a recurring subscription:
+    // it stays true for anyone who has ever paid, so filtering on it would keep
+    // pushing reminders to people who cancelled months ago. Access is
+    // access_expires_at > now().
+    //
+    // Rows predating the subscription model were backfilled to 2099 by
+    // migration 005, so grandfathered lifetime buyers still match. Profiles
+    // that never had access have a null expiry, which .gt() excludes.
     const {data: profiles, error} = await supabase
       .from('profiles')
       .select(
         'user_id, onesignal_player_id, paid_at, awake_start, awake_end, utc_offset_minutes, time_zone, loop_enabled',
       )
       .eq('is_paid', true)
+      .gt('access_expires_at', now.toISOString())
       .not('onesignal_player_id', 'is', null);
 
     if (error) throw error;

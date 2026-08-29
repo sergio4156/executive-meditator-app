@@ -16,7 +16,11 @@ import {useAppDispatch, useAppSelector} from '@/store';
 import {setUser, setLoading, setIsPaid, setPaidAt, setLoopEnabled} from '@/store/slices/authSlice';
 import {completeOnboarding} from '@/store/slices/notificationSlice';
 import {onAuthStateChange} from '@/services/supabase/auth';
-import {fetchPaymentStatus, syncTimeZoneIfChanged} from '@/services/supabase/database';
+import {
+  fetchPaymentStatus,
+  syncTimeZoneIfChanged,
+  hasActiveAccess,
+} from '@/services/supabase/database';
 import {syncOneSignalIdForUser, getPushPermission} from '@/services/onesignal/notifications';
 import {setCurrentWeek} from '@/store/slices/meditationSlice';
 import {deriveWeek} from '@/utils/weekProgression';
@@ -141,25 +145,36 @@ export function AppNavigator() {
         identify(uid);
         track('login_completed');
 
-        // Hydrate isPaid + paidAt from cache so the navigator can render
-        // immediately, then refresh from the backend in the background.
-        const [cachedPaid, rawCachedPaidAt] = await Promise.all([
-          AsyncStorage.getItem(`isPaid:${uid}`),
+        // Hydrate from cache so the navigator can render immediately, then
+        // refresh from the backend in the background.
+        //
+        // The cache stores the EXPIRY, not a boolean. A cached "is paid: yes"
+        // would let a lapsed subscriber back in every cold start until the
+        // network call returned — and indefinitely while offline. Storing the
+        // timestamp lets the same expiry check run locally, so access ends on
+        // time without needing the network.
+        const [rawCachedExpiry, rawCachedPaidAt] = await Promise.all([
+          AsyncStorage.getItem(`accessExpiresAt:${uid}`),
           AsyncStorage.getItem(`paidAt:${uid}`),
         ]);
         const cachedPaidAt = rawCachedPaidAt && rawCachedPaidAt.length > 0 ? rawCachedPaidAt : null;
-        dispatch(setIsPaid(cachedPaid === '1'));
+        const cachedExpiry =
+          rawCachedExpiry && rawCachedExpiry.length > 0 ? rawCachedExpiry : null;
+        dispatch(setIsPaid(hasActiveAccess(cachedExpiry)));
         dispatch(setPaidAt(cachedPaidAt));
         dispatch(setCurrentWeek(deriveWeek(cachedPaidAt)));
         dispatch(setLoading(false));
 
         fetchPaymentStatus(uid)
-          .then(({isPaid, paidAt, loopEnabled}) => {
+          .then(({isPaid, paidAt, accessExpiresAt, loopEnabled}) => {
             dispatch(setIsPaid(isPaid));
             dispatch(setPaidAt(paidAt));
             dispatch(setLoopEnabled(loopEnabled));
             dispatch(setCurrentWeek(deriveWeek(paidAt)));
-            AsyncStorage.setItem(`isPaid:${uid}`, isPaid ? '1' : '0').catch(() => {});
+            AsyncStorage.setItem(
+              `accessExpiresAt:${uid}`,
+              accessExpiresAt ?? '',
+            ).catch(() => {});
             AsyncStorage.setItem(`paidAt:${uid}`, paidAt ?? '').catch(() => {});
 
             // Report week progression off the AUTHORITATIVE paid_at, not the
@@ -183,7 +198,13 @@ export function AppNavigator() {
         try {
           const keys = await AsyncStorage.getAllKeys();
           const toRemove = keys.filter(
-            k => k.startsWith('isPaid:') || k.startsWith('paidAt:'),
+            k =>
+              k.startsWith('accessExpiresAt:') ||
+              k.startsWith('paidAt:') ||
+              // Legacy key from the one-time-purchase model. Still cleared so
+              // an old cached '1' cannot survive an app update and grant
+              // access to someone whose subscription has lapsed.
+              k.startsWith('isPaid:'),
           );
           if (toRemove.length > 0) {
             await AsyncStorage.multiRemove(toRemove);
