@@ -7,5 +7,6 @@
       "@/*": ["src/*"]
     }
   },
-  "exclude": ["node_modules", "supabase/functions"]
+  "//": "website/ has its own tsconfig (Next.js: DOM lib, its own @/* alias). Checking it with this React Native config produces phantom errors — 'Cannot find name window', unresolvable '@/lib/...' — that appear in the editor but not in either project's real typecheck. supabase/functions is Deno.",
+  "exclude": ["node_modules", "supabase/functions", "website"]
 }
