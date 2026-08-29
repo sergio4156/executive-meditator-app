@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-type Tier = 'individual' | 'corporate';
-
-const TIER_CONFIG: Record<Tier, { unitAmount: number; name: string; description: string }> = {
-  individual: {
-    unitAmount: 1000, // $10.00 in cents
-    name: 'The Executive Meditator — Individual',
-    description:
-      'Lifetime access to the Executive Meditator app and the complete 21-day program. One-time purchase, no subscription.',
-  },
-  corporate: {
-    unitAmount: 50000, // $500.00 in cents
-    name: 'The Executive Meditator — Corporate (up to 500 employees)',
-    description:
-      'Organization-wide license for the Executive Meditator app and the 21-day program. Covers up to 500 employees, one-time purchase, no subscription.',
-  },
+/**
+ * Individual purchase only.
+ *
+ * The corporate/organization tier ($500) was removed 2026-08-29. Apple cited
+ * Guideline 3.1.3(c) (Enterprise Services) on the iOS submission, reasoning that
+ * because the same service was sold both to organizations and to individuals,
+ * the individual sales had to go through In-App Purchase. We are not pursuing
+ * organizational sales yet, so removing the tier removes that half of the
+ * argument entirely rather than leaving it to interpretation.
+ *
+ * Companies are now handled as a conversation, not a product: the corporate
+ * section on the landing page keeps its inquiry form, which routes to
+ * /api/contact. No organizational price is advertised anywhere.
+ *
+ * Note the tier was already unreachable from the UI — the corporate pricing
+ * card's CTA pointed at the inquiry anchor, never at checkout. Removing it
+ * changes no working flow.
+ */
+const PRICE = {
+  unitAmount: 1000, // $10.00 in cents
+  name: 'The Executive Meditator — Individual',
+  description:
+    'Lifetime access to the Executive Meditator app and the complete 21-day program. One-time purchase, no subscription.',
 };
 
 export async function POST(request: NextRequest) {
@@ -32,14 +40,15 @@ export async function POST(request: NextRequest) {
     });
 
     const body = await request.json().catch(() => ({}));
-    const { email, userId, tier } = body as {
+    const { email, userId } = body as {
       email?: string;
       userId?: string;
-      tier?: Tier;
     };
 
-    const resolvedTier: Tier = tier === 'corporate' ? 'corporate' : 'individual';
-    const { unitAmount, name, description } = TIER_CONFIG[resolvedTier];
+    // `tier` is deliberately not read from the body any more. Ignoring it means
+    // a stale client — or a hand-crafted request — cannot select a price we no
+    // longer offer.
+    const { unitAmount, name, description } = PRICE;
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
@@ -63,7 +72,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      metadata: { supabase_user_id: userId ?? '', tier: resolvedTier },
+      metadata: { supabase_user_id: userId ?? '' },
       success_url: `${baseUrl}/setup/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/#pricing`,
     });
