@@ -47,7 +47,7 @@ describe('POST /api/stripe/checkout', () => {
     expect(body.url).toBe('https://checkout.stripe.com/test-session');
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: 'payment',
+        mode: 'subscription',
         customer_email: 'user@example.com',
       })
     );
@@ -71,16 +71,21 @@ describe('POST /api/stripe/checkout', () => {
     );
   });
 
-  it('defaults to the individual tier and charges $10 (1000 cents)', async () => {
+  it('charges $19.99 (1999 cents) on a 3-month recurring interval', async () => {
     await POST(makeRequest({ email: 'user@example.com' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: expect.arrayContaining([
           expect.objectContaining({
             price_data: expect.objectContaining({
-              unit_amount: 1000,
+              unit_amount: 1999,
+              // The interval is load-bearing: Stripe has no 'quarter', so a
+              // 3-month cycle is interval 'month' with interval_count 3. It
+              // must match the App Store subscription period, or web and
+              // in-app customers get different amounts of access for $19.99.
+              recurring: { interval: 'month', interval_count: 3 },
               product_data: expect.objectContaining({
-                name: 'The Executive Meditator — Individual',
+                name: 'The Executive Meditator',
               }),
             }),
           }),
@@ -89,7 +94,18 @@ describe('POST /api/stripe/checkout', () => {
     );
   });
 
-  it('IGNORES a corporate tier request and still charges $10', async () => {
+  it('puts supabase_user_id on the SUBSCRIPTION, not just the session', async () => {
+    // Renewal events arrive against the subscription and carry no session, so
+    // without this a renewal three months later cannot be attributed to a user.
+    await POST(makeRequest({ email: 'user@example.com', userId: 'uuid-123' }));
+    expect(mockStripe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subscription_data: { metadata: { supabase_user_id: 'uuid-123' } },
+      })
+    );
+  });
+
+  it('IGNORES a corporate tier request and still charges $19.99', async () => {
     // The corporate tier was removed 2026-08-29 (Apple Guideline 3.1.3(c)).
     // A stale client or a hand-crafted request must not be able to select a
     // price we no longer offer — the route ignores `tier` entirely rather than
@@ -100,9 +116,9 @@ describe('POST /api/stripe/checkout', () => {
         line_items: expect.arrayContaining([
           expect.objectContaining({
             price_data: expect.objectContaining({
-              unit_amount: 1000,
+              unit_amount: 1999,
               product_data: expect.objectContaining({
-                name: 'The Executive Meditator — Individual',
+                name: 'The Executive Meditator',
               }),
             }),
           }),
@@ -126,7 +142,7 @@ describe('POST /api/stripe/checkout', () => {
       expect.objectContaining({
         line_items: expect.arrayContaining([
           expect.objectContaining({
-            price_data: expect.objectContaining({ unit_amount: 1000 }),
+            price_data: expect.objectContaining({ unit_amount: 1999 }),
           }),
         ]),
       })

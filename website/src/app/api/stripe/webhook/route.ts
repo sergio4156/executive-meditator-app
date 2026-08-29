@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Locate the profile — prefer user_id (from checkout metadata), fall back to email.
     const lookup = supabase
       .from('profiles')
-      .select('user_id, is_paid, stripe_session_id');
+      .select('user_id, is_paid, stripe_session_id, paid_at');
     const { data: profiles, error: lookupError } = await (
       userId ? lookup.eq('user_id', userId) : lookup.eq('email', email!)
     );
@@ -75,20 +75,44 @@ export async function POST(request: NextRequest) {
 
     const profile = profiles[0];
 
-    // Idempotency: Stripe delivers at-least-once and retries. If we already
-    // applied this payment, ack without resetting paid_at (which would rewind the
-    // user's 21-day program) or re-sending the welcome email.
-    if (profile.is_paid || profile.stripe_session_id === session.id) {
-      console.log('Webhook: payment already applied for', profile.user_id, '— skipping (idempotent)');
+    // Idempotency: Stripe delivers at-least-once and retries.
+    //
+    // Deliberately keyed ONLY on the session id. The previous version also
+    // bailed when is_paid was true, which was correct for a one-time purchase
+    // but would now reject every resubscription — is_paid stays true forever
+    // once someone has paid.
+    if (profile.stripe_session_id === session.id) {
+      console.log('Webhook: session already applied for', profile.user_id, '— skipping (idempotent)');
       return NextResponse.json({ received: true, idempotent: true });
     }
+
+    // The subscription carries the billing period; the checkout session does
+    // not. Retrieve it to learn when access should expire.
+    const subscriptionId =
+      typeof session.subscription === 'string'
+        ? session.subscription
+        : session.subscription?.id;
+
+    if (!subscriptionId) {
+      console.error('Webhook: checkout session', session.id, 'has no subscription — cannot set access expiry');
+      return NextResponse.json({ error: 'No subscription on session.' }, { status: 500 });
+    }
+
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const accessExpiresAt = periodEndToIso(subscription.current_period_end);
 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
         is_paid: true,
         stripe_session_id: session.id,
-        paid_at: new Date().toISOString(),
+        access_expires_at: accessExpiresAt,
+        subscription_provider: 'stripe',
+        subscription_id: subscriptionId,
+        // paid_at anchors the 21-day program, so it is set ONLY on the first
+        // purchase. Rewriting it on a resubscription would restart someone's
+        // program at Week 1.
+        ...(profile.paid_at ? {} : { paid_at: new Date().toISOString() }),
         ...(email ? { email } : {}),
       })
       .eq('user_id', profile.user_id);
@@ -120,7 +144,112 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  /**
+   * RENEWAL — extend access.
+   *
+   * Fires for every successful charge on a subscription, including the first.
+   * The initial one is harmless: it computes the same expiry the checkout
+   * handler already wrote, so the two are idempotent with each other and the
+   * ordering between them does not matter.
+   *
+   * Matched by subscription_id, because a renewal three months later carries
+   * no checkout session and no email — the subscription is the only link back
+   * to the user.
+   */
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object as Stripe.Invoice;
+    const subscriptionId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription?.id;
+
+    // Not a subscription invoice — nothing to extend.
+    if (!subscriptionId) {
+      return NextResponse.json({ received: true });
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const periodEnd = invoice.lines?.data?.[0]?.period?.end;
+    if (!periodEnd) {
+      console.error('Webhook: invoice', invoice.id, 'has no line period end — cannot extend access');
+      return NextResponse.json({ error: 'No period on invoice.' }, { status: 500 });
+    }
+
+    const { error, count } = await supabase
+      .from('profiles')
+      .update(
+        {
+          is_paid: true,
+          access_expires_at: periodEndToIso(periodEnd),
+        },
+        { count: 'exact' }
+      )
+      .eq('subscription_id', subscriptionId);
+
+    if (error) {
+      console.error('Webhook: failed to extend access for subscription', subscriptionId, error);
+      return NextResponse.json({ error: 'DB update failed.' }, { status: 500 });
+    }
+
+    // A renewal we cannot attribute means someone is being charged while their
+    // access quietly lapses. Non-200 so Stripe retries and it surfaces.
+    if (count === 0) {
+      console.error('Webhook: no profile matched subscription', subscriptionId, '— renewal not applied');
+      return NextResponse.json({ error: 'Profile not found.' }, { status: 500 });
+    }
+
+    console.log('Access extended for subscription', subscriptionId, 'until', periodEndToIso(periodEnd));
+  }
+
+  /**
+   * CANCELLED OR ENDED — let access lapse.
+   *
+   * Stripe deletes the subscription at the end of the paid period (not at the
+   * moment the user clicks cancel), so expiring immediately here is correct:
+   * they have already had what they paid for.
+   *
+   * is_paid is deliberately left true — it means "has ever paid", and clearing
+   * it would lose the fact that they were once a customer. access_expires_at
+   * is what governs entry.
+   */
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription;
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        access_expires_at: new Date().toISOString(),
+        subscription_id: null,
+      })
+      .eq('subscription_id', subscription.id);
+
+    if (error) {
+      console.error('Webhook: failed to expire access for subscription', subscription.id, error);
+      return NextResponse.json({ error: 'DB update failed.' }, { status: 500 });
+    }
+
+    console.log('Access expired for cancelled subscription', subscription.id);
+  }
+
   return NextResponse.json({ received: true });
+}
+
+/**
+ * Stripe reports period boundaries as UNIX seconds; Postgres wants an ISO
+ * timestamp. Getting this wrong by a factor of 1000 would set expiry to 1970
+ * and lock out every paying customer.
+ */
+function periodEndToIso(periodEndSeconds: number): string {
+  return new Date(periodEndSeconds * 1000).toISOString();
 }
 
 async function sendDownloadEmail(email: string) {

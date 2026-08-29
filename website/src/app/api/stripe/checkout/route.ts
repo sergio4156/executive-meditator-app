@@ -19,11 +19,26 @@ import Stripe from 'stripe';
  * card's CTA pointed at the inquiry anchor, never at checkout. Removing it
  * changes no working flow.
  */
+/**
+ * Recurring subscription, billed every 3 months.
+ *
+ * Was a one-time $10 payment sold as "lifetime access". Changed 2026-08-29:
+ * the program runs in 21-day cycles and access now continues only while the
+ * subscription is active.
+ *
+ * The 3-month interval is deliberate. Apple's auto-renewable subscriptions only
+ * support 1 week / 1 / 2 / 3 / 6 months / 1 year — there is no 63-day option to
+ * match three 21-day cycles exactly. 2 months (~61 days) would cut users off
+ * two days before finishing a cycle; 3 months (~91 days) covers four full
+ * cycles with a week to spare. The web price must match the App Store price,
+ * so the same interval is used here.
+ */
 const PRICE = {
-  unitAmount: 1000, // $10.00 in cents
-  name: 'The Executive Meditator — Individual',
+  unitAmount: 1999, // $19.99 in cents — matches the App Store tier
+  intervalMonths: 3,
+  name: 'The Executive Meditator',
   description:
-    'Lifetime access to the Executive Meditator app and the complete 21-day program. One-time purchase, no subscription.',
+    'Access to the Executive Meditator app and the 21-day program. Billed every 3 months. Cancel any time.',
 };
 
 export async function POST(request: NextRequest) {
@@ -48,7 +63,7 @@ export async function POST(request: NextRequest) {
     // `tier` is deliberately not read from the body any more. Ignoring it means
     // a stale client — or a hand-crafted request — cannot select a price we no
     // longer offer.
-    const { unitAmount, name, description } = PRICE;
+    const { unitAmount, intervalMonths, name, description } = PRICE;
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
@@ -56,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'payment',
+      mode: 'subscription',
       customer_email: email || undefined,
       allow_promotion_codes: true,
       line_items: [
@@ -64,6 +79,12 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             unit_amount: unitAmount,
+            // Makes this a recurring price. Stripe expresses a 3-month cycle as
+            // interval 'month' with interval_count 3; there is no 'quarter'.
+            recurring: {
+              interval: 'month',
+              interval_count: intervalMonths,
+            },
             product_data: {
               name,
               description,
@@ -73,6 +94,13 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: { supabase_user_id: userId ?? '' },
+      // Checkout metadata does not propagate to the subscription, and renewal
+      // events arrive against the SUBSCRIPTION, not the checkout session.
+      // Without this the webhook would receive renewals it cannot attribute to
+      // a user.
+      subscription_data: {
+        metadata: { supabase_user_id: userId ?? '' },
+      },
       success_url: `${baseUrl}/setup/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/#pricing`,
     });
