@@ -90,8 +90,8 @@ export default function HeroSection() {
           variants={fadeUp}
           className="font-sans text-base md:text-lg text-cream-200 opacity-80 max-w-2xl mx-auto leading-relaxed mb-10"
         >
-          In just 21 days, the Great Silence becomes a permanent capacity — 10
-          seconds of inner stillness, accessible anytime, for life. The 3 P&apos;s of
+          In just 21 days, the Great Silence becomes a lasting capacity — 10
+          seconds of inner stillness, accessible anytime. The 3 P&apos;s of
           inspired performance follow:{' '}
           <span className="text-gold-400">Peace</span>,{' '}
           <span className="text-gold-400">Productivity</span>, and{' '}

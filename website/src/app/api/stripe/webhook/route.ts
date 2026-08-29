@@ -274,7 +274,7 @@ async function sendDownloadEmail(email: string) {
           Welcome to The Executive Meditator
         </h1>
         <p style="font-size: 14px; color: #E8E3DB; opacity: 0.8; margin-bottom: 24px; border-bottom: 1px solid #1B2B4B; padding-bottom: 20px;">
-          Your purchase has been received. You now have lifetime access to the 21-day program.
+          Your subscription is active. You now have access to the 21-day program, billed $19.99 every 3 months.
         </p>
 
         <p style="font-size: 15px; color: #E8E3DB; line-height: 1.7; margin-bottom: 24px;">

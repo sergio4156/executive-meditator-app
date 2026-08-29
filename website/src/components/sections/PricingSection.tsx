@@ -47,10 +47,10 @@ const tiers: Tier[] = [
     id: 'individual',
     role: 'Individual',
     subtitle: 'Anyone, any field',
-    price: '$10',
-    pricingNote: 'One-time. Lifetime access.',
+    price: '$19.99',
+    pricingNote: 'Every 3 months. Cancel any time.',
     description:
-      'Complete the 21-day program. Permanently unlock the Great Silence — 10 seconds of inner stillness, accessible anytime, for life.',
+      'Complete the 21-day program and keep practising. Unlock the Great Silence — 10 seconds of inner stillness, accessible anytime.',
     cta: 'Get the App',
     ctaHref: '/setup',
     featured: false,
@@ -185,7 +185,7 @@ export default function PricingSection() {
             Pricing
           </p>
           <h2 className="font-serif text-4xl md:text-5xl text-navy-950 font-light">
-            One Investment, Permanent Returns
+            One Practice, Compounding Returns
           </h2>
         </motion.div>
 
@@ -196,9 +196,9 @@ export default function PricingSection() {
           variants={fadeUp}
           className="text-center font-sans text-sm text-text-muted max-w-2xl mx-auto mb-16 leading-relaxed"
         >
-          One-time purchase. Lifetime access. The 21-day program installs the
-          Great Silence as a permanent capacity — for you, or for your entire
-          organization.
+          $19.99 every 3 months. Cancel any time. The 21-day program installs
+          the Great Silence as a daily capacity, and your subscription keeps the
+          guided cycles running long after the first one ends.
         </motion.p>
 
         {/* Cards grid */}
@@ -237,9 +237,10 @@ export default function PricingSection() {
             engagement across all 21 days. A minimum of 5 awake hours per day
             is recommended for the program to take full effect. The Executive
             Meditator app is a wellness and meditation tool, not medical advice
-            or a substitute for professional care. Your access is for life —
-            the program is fully resettable, so you may begin again as many
-            times as needed to arrive at the experience you came for.
+            or a substitute for professional care. The program is fully
+            resettable, so for as long as your subscription is active you may
+            begin again as many times as needed to arrive at the experience you
+            came for.
           </p>
         </motion.div>
       </div>

@@ -24,9 +24,9 @@ export default function SuccessPage() {
             Welcome to the Program
           </h1>
           <p className="font-sans text-cream-200 text-sm leading-relaxed opacity-80 mb-8">
-            Your purchase has been received. Lifetime access is yours. Download
-            the app and sign in with your email and password to unlock the
-            Great Silence.
+            Your subscription is active. Download the app and sign in with your
+            email and password to unlock the Great Silence. You will be billed
+            $19.99 every 3 months, and can cancel any time.
           </p>
 
           {/* Download buttons */}

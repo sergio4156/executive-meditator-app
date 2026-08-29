@@ -166,15 +166,15 @@ export default function CorporateSection() {
             Transformation
           </h2>
           <p className="font-sans text-sm text-cream-200 opacity-70 leading-relaxed mb-5 max-w-md">
-            One flat investment transforms your entire team into Executive
-            Meditators — any role, any field. In 21 days your people gain
-            permanent access to the Great Silence and begin receiving inspired
-            insight directly from the All-Infinite Database.
+            One program transforms your entire team into Executive Meditators —
+            any role, any field. In 21 days your people gain access to the Great
+            Silence and begin receiving inspired insight directly from the
+            All-Infinite Database.
           </p>
           <p className="font-sans text-sm text-cream-200 opacity-70 leading-relaxed mb-12 max-w-md">
             What once took monks, nuns, lamas, and priests a lifetime of
             rigorous practice is now accessible to your organization through a
-            simple 10-second daily practice. Lifetime access.
+            simple 10-second daily practice.
           </p>
 
           {/* The 3 P's */}

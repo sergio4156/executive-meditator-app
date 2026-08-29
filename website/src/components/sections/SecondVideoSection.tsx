@@ -186,7 +186,7 @@ export default function SecondVideoSection() {
           </Link>
 
           <p className="mt-5 font-sans text-xs text-text-muted opacity-50">
-            Lifetime access &mdash; $10 &middot; Secured by Stripe
+            $19.99 every 3 months &middot; Cancel any time &middot; Secured by Stripe
           </p>
         </motion.div>
       </div>

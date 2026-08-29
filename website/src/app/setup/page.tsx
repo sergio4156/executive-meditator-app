@@ -126,9 +126,8 @@ export default function SetupPage() {
             Begin Your Journey
           </h1>
           <p className="font-sans text-cream-200 text-sm text-center mb-8 leading-relaxed opacity-80">
-            Create your account to begin the 21-day program and unlock
-            permanent access to the Great Silence — 10 seconds of inner
-            stillness, anytime, for life.
+            Create your account to begin the 21-day program and unlock the
+            Great Silence — 10 seconds of inner stillness, anytime.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -309,7 +308,7 @@ export default function SetupPage() {
           {/* Stripe note */}
           <p className="mt-6 text-center font-sans text-xs text-cream-200 opacity-50 leading-relaxed">
             After creating your account, you will be directed to a secure Stripe
-            checkout to complete your one-time purchase — $10 for lifetime access.
+            checkout — $19.99 every 3 months, cancel any time.
           </p>
         </div>
 

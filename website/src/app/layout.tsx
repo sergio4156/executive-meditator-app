@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.theexecutivemeditator.com'),
   title: 'The Executive Meditator | Peace, Productivity & Profits',
   description:
-    'Become an Executive Meditator — no title required. In just 21 days, the Great Silence becomes a permanent capacity: 10 seconds of inner stillness, accessible anytime, for life.',
+    'Become an Executive Meditator — no title required. In just 21 days, the Great Silence becomes a daily capacity: 10 seconds of inner stillness, accessible anytime. $19.99 every 3 months, cancel any time.',
   keywords: [
     'executive meditator',
     'meditation app',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'The Executive Meditator | Peace, Productivity & Profits',
     description:
-      'Become an Executive Meditator in 21 days. Lifetime access to the Great Silence — 10 seconds of inner stillness, anytime, for life.',
+      'Become an Executive Meditator in 21 days. Unlock the Great Silence — 10 seconds of inner stillness, anytime. $19.99 every 3 months.',
     type: 'website',
     url: 'https://www.theexecutivemeditator.com',
     siteName: 'The Executive Meditator',

@@ -66,8 +66,9 @@ export default function TermsPage() {
               <p>
                 The Executive Meditator is a micro-meditation reminder service that delivers
                 timed push notifications across a multi-week program. Access is granted through
-                a one-time payment made on our website. The mobile applications do not sell
-                anything; they unlock for accounts that already hold access.
+                a recurring subscription purchased on our website, and continues for as long as
+                that subscription remains active. The mobile applications do not sell anything;
+                they unlock for accounts that already hold access.
               </p>
               <p className="mt-3">
                 Notification delivery depends on your device, operating system, network
@@ -98,14 +99,39 @@ export default function TermsPage() {
 
             <section>
               <h2 className="font-serif text-xl text-white font-light mb-3">
-                5. Payment and Refunds
+                5. Subscription, Billing, and Refunds
               </h2>
               <p>
+                The Service is sold as an auto-renewing subscription at $19.99 every 3 months.
+                Your subscription renews automatically at the same price at the end of each
+                3-month term, and your payment method is charged at that time, until you
+                cancel. Prices are in U.S. dollars and exclude any applicable taxes.
+              </p>
+              <p className="mt-3">
+                You may cancel at any time. Cancellation takes effect at the end of the term
+                you have already paid for — you keep access until then, and are not charged
+                again. To cancel a subscription purchased on our website, use the billing link
+                in your purchase receipt or contact us at{' '}
+                <a
+                  href="mailto:admin@theexecutivemeditator.com"
+                  className="text-gold-500 hover:text-gold-400 underline"
+                >
+                  admin@theexecutivemeditator.com
+                </a>
+                . If your subscription lapses, your account and program progress are retained;
+                access resumes if you subscribe again.
+              </p>
+              <p className="mt-3">
                 Payments are processed by Stripe; we do not store your full payment card
                 details. All fees are stated at checkout. Except where a refund is required by
                 applicable law, or where we agree to one in writing, fees are non-refundable.
                 If you believe you were charged in error, contact us and we will review the
                 matter in good faith.
+              </p>
+              <p className="mt-3">
+                If we change the subscription price, we will give you notice before the change
+                takes effect, and the new price will apply only to renewals that occur after
+                that notice.
               </p>
             </section>
 
