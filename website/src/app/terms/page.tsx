@@ -66,9 +66,9 @@ export default function TermsPage() {
               <p>
                 The Executive Meditator is a micro-meditation reminder service that delivers
                 timed push notifications across a multi-week program. Access is granted through
-                a recurring subscription purchased on our website, and continues for as long as
-                that subscription remains active. The mobile applications do not sell anything;
-                they unlock for accounts that already hold access.
+                a recurring subscription, and continues for as long as that subscription remains
+                active. You may subscribe on our website, or through an in-app purchase in the
+                iOS application. Either way the subscription unlocks the same account.
               </p>
               <p className="mt-3">
                 Notification delivery depends on your device, operating system, network
@@ -106,6 +106,14 @@ export default function TermsPage() {
                 Your subscription renews automatically at the same price at the end of each
                 3-month term, and your payment method is charged at that time, until you
                 cancel. Prices are in U.S. dollars and exclude any applicable taxes.
+              </p>
+              <p className="mt-3">
+                If you subscribe through the iOS application, Apple is the merchant of record.
+                Your Apple Account is charged at confirmation of purchase and again at each
+                renewal, and the subscription is managed and cancelled in your Apple Account
+                settings rather than by us. Apple&apos;s prices in your local currency are shown
+                in the app before you purchase and may differ from the U.S. price stated above.
+                Refunds for App Store purchases are handled by Apple under its own policies.
               </p>
               <p className="mt-3">
                 You may cancel at any time. Cancellation takes effect at the end of the term
