@@ -3,9 +3,37 @@
 How to archive + sign + upload the iOS build to App Store Connect from the terminal
 (the Xcode GUI's automatic signing fails on this account — see "Why" below).
 
-## ✅ STATUS: build `1.0 (1)` uploaded 2026-08-11, "Ready to Submit", submitted to App Review
+## ✅ STATUS: build `1.0 (1)` uploaded 2026-08-11 — **REJECTED**, next build pending
 This runbook worked end to end. Below is what actually blocked it and how each resolved — keep it,
 because the environment problems recur on any new machine or Xcode upgrade.
+
+> ### ⚠️ Before building the next version — In-App Purchase must exist first
+> Build 1 was rejected under **Guideline 3.1.1 / 3.1.3(c)**: it unlocked content sold only on our
+> website, and the same service was offered to organizations, so individual sales had to go
+> through IAP. The code side is done (iOS IAP + subscription model). The **console side is not**,
+> and a build uploaded before it is finished will show an empty paywall price and be rejected again.
+>
+> In App Store Connect, before uploading:
+> 1. **Subscriptions** → create a group → subscription `com.executivemeditator.access.3month`,
+>    duration **3 months**, price **$19.99**. Must match `IOS_SUBSCRIPTION_SKU` in
+>    `src/services/iap/index.ts` character for character.
+> 2. Add its **localization** and a **review screenshot** — Apple rejects subscriptions without one.
+> 3. **Users and Access → Integrations → In-App Purchase** → generate a key. ⚠️ This is a *different*
+>    key from the App Store Connect API key below; the upload key will not authenticate against the
+>    App Store Server API.
+> 4. **App Information → App Store Server Notifications** → set the **Production and Sandbox** URLs
+>    to the deployed `apple-notifications` Edge Function. TestFlight and App Review both transact in
+>    sandbox, so leaving the sandbox URL unset means renewals go untested until real customers hit them.
+> 5. Attach the subscription to the version being submitted, or review will not see it.
+>
+> Then deploy the backend (see `ARCHITECTURE.md` → "Supabase Edge Functions — Apple In-App Purchase"):
+> run migration `005`, set the four `APPLE_*` secrets, and
+> `supabase functions deploy apple-notifications --no-verify-jwt`.
+>
+> **Sandbox testing:** create a Sandbox Apple Account under Users and Access → Sandbox, sign into it
+> on the device under Settings → Developer, and buy through the paywall. Sandbox renewals are
+> accelerated (a 3-month subscription renews every few minutes), which is the only practical way to
+> exercise the renewal webhook before release.
 
 ### Environment setup (one-time per machine)
 1. **Xcode 26 + macOS 26.** The App Store install of Xcode 26.6 was not sufficient on its own; it
@@ -53,6 +81,9 @@ because the environment problems recur on any new machine or Xcode upgrade.
   role Admin. File stored at `~/Documents/executive-meditator-credentials/AuthKey_6488MA37WP.p8`
   (outside the repo; also back up in password manager).
 - **APNs key** (OneSignal, separate): Key ID `UXWL3JH82L`, `AuthKey_UXWL3JH82L.p8` (same secure folder).
+- **In-App Purchase key** (App Store Server API, separate again): generated at Users and Access →
+  Integrations → In-App Purchase. Store the `.p8` in the same secure folder and paste its contents
+  into the Supabase secret `APPLE_IAP_PRIVATE_KEY`. Not interchangeable with the two keys above.
 - App ID / bundle: com.executivemeditator.app.  ASC app id (Apple ID): 6800176255.
 
 ## Why CLI (not the Xcode GUI Archive)

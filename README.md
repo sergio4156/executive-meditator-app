@@ -18,22 +18,24 @@ A React Native mobile app (**both platforms submitted, neither publicly launched
 | Timezone- & DST-aware scheduling within each user's awake-hours window | ✅ |
 | Compassionate 4-level alarm escalation for missed sessions | ✅ |
 | Email/password auth (Supabase) | ✅ |
-| Payment gating — app unlocks when `is_paid = true` (purchase happens on the website) | ✅ |
+| Subscription access — $19.99 every 3 months, auto-renewing; app unlocks while `access_expires_at > now()` | ✅ |
+| Web purchase via Stripe (`mode: subscription`), with renewal/cancellation webhooks | ✅ |
+| iOS In-App Purchase (StoreKit) with server-side verification and Restore | ✅ |
 | Indefinite 21-day loop with an opt-out toggle in Settings | ✅ |
 | Product analytics — activation, week progression, churn (Firebase Analytics) | ✅ |
 
-> The in-app paywall follows Google Play's **"reader app"** pattern: it does **not** show a price or link out to the web purchase — it only tells unpaid users they need access and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
+> **The paywall is two different screens.** On **iOS** it sells: Apple's Guideline 3.1.1 requires in-app content to be purchasable via IAP, and the screen carries the price (read from StoreKit, never hardcoded), the term, the auto-renewal disclosure, Restore Purchases, and Terms/Privacy links that Guideline 3.1.2 requires. On **Android** it does not: Play Billing is not implemented and Play's Payments policy forbids linking out, so it keeps the neutral "access required + contact support" message. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
 
 ---
 
-## Release status (as of 2026-08-13)
+## Release status (as of 2026-08-29)
 
-Neither store is publicly live yet. Both are submitted and waiting.
+Neither store is publicly live yet.
 
 | Platform | State | Detail |
 |---|---|---|
-| **Apple App Store** | ⏳ In review | Build `1.0 (1)` submitted 2026-08-11. **Manual release** — approval does not publish; we choose the date. |
-| **Google Play** | ⏳ In review | Closed-testing release `10 (1.0.8)` submitted 2026-08-13 with 12 enrolled testers. Google states review takes up to 7 days, then a mandatory **14-day** closed test must complete before "Apply for production" unlocks. |
+| **Apple App Store** | 🔧 Rebuilding | Build `1.0 (1)` was rejected under **Guideline 3.1.1 / 3.1.3(c)** — the app unlocked content sold only on our website, and the same service was offered to organizations, so individual sales had to go through In-App Purchase. Both halves are now addressed: the corporate tier is removed and iOS IAP is implemented. Next build must be uploaded after the App Store Connect subscription product is created. |
+| **Google Play** | ⏸ Parked | Closed testing was set up but the mandatory 14-day clock never started (no release was rolled out). Deliberately paused — iPhone is the current target audience. Note the paywall change: Android still does not sell, so Play testers need access granted server-side before they can get past it. |
 
 Build runbooks: **iOS** → [app-store-assets/IOS_BUILD_UPLOAD.md](app-store-assets/IOS_BUILD_UPLOAD.md) · **Android** → [play-store-assets/ANDROID_RELEASE.md](play-store-assets/ANDROID_RELEASE.md)
 
@@ -46,6 +48,7 @@ Build runbooks: **iOS** → [app-store-assets/IOS_BUILD_UPLOAD.md](app-store-ass
 - **Redux Toolkit** (`authSlice`, `meditationSlice`, `notificationSlice`)
 - **Supabase** — Postgres database + auth
 - **OneSignal 4.5.1** — push notifications
+- **react-native-iap 12.16.4** — iOS In-App Purchase. Pinned to the 12 line deliberately: v14+ requires `react-native-nitro-modules`, which needs the New Architecture, and this app runs RN 0.74 on the old architecture.
 - **Firebase Crashlytics** (`@react-native-firebase`) — crash + JS-error reporting
 - **Firebase Analytics** (`@react-native-firebase/analytics`) — product analytics; see [ARCHITECTURE.md](ARCHITECTURE.md) → "Product analytics"
 - **Jest + React Native Testing Library** — unit tests
@@ -173,11 +176,13 @@ cd website && npm test        # website suite
 cd website && npm run lint    # website ESLint
 ```
 
-Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
+Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics, iap, appleAccess). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
+
+`__tests__/services/appleAccess.test.ts` exercises a **Deno** Edge Function module from Jest by shimming `globalThis.Deno` before the require. That module is where entitlement is decided, and every way it can be wrong costs money in one direction or the other, so it is worth testing outside its runtime.
 
 **The two commands overlap — don't add their totals together.** The repo-root `npm test` runs *everything*, because the root Jest config also picks up `website/src/**/__tests__`. The website command runs a subset, useful when you only care about that project.
 
-Counts as of 2026-08-13: **112 tests total** (62 mobile + 50 website) across 11 suites, all passing, with zero type errors and zero lint errors in either project.
+Counts as of 2026-08-29: **147 tests total** (88 mobile + 59 website) across 13 suites, all passing, with zero type errors and zero lint errors in either project.
 
 Both ESLint configs disable a rule or two for stated reasons rather than taste — see the comments in [.eslintrc.js](.eslintrc.js) and [website/.eslintrc.json](website/.eslintrc.json) before re-enabling anything. The handful of remaining warnings are left deliberately as real (if minor) issues, so a non-empty lint run means something.
 
@@ -185,8 +190,10 @@ Both ESLint configs disable a rule or two for stated reasons rather than taste �
 
 ## Roadmap
 
-- [ ] iOS App Store release (submitted — awaiting Apple)
-- [ ] Google Play production release (closed test in review; 14-day test period still to run)
+- [ ] **App Store Connect: create the subscription product** (group + `com.executivemeditator.access.3month`, 3 months, $19.99, localization, review screenshot) and generate an **In-App Purchase key**. The IAP code is complete but inert until this exists — see [ARCHITECTURE.md](ARCHITECTURE.md) → "Supabase Edge Functions — Apple In-App Purchase".
+- [ ] **Deploy the two Apple Edge Functions** and set both the Production and Sandbox notification URLs.
+- [ ] iOS App Store release (resubmit after the above)
+- [ ] Google Play — parked. Before resuming, note Android users cannot buy anything in-app, so testers need access granted server-side.
 - [ ] **Raise `IPHONEOS_DEPLOYMENT_TARGET` 13.4 → 15.0** — Apple rejects uploads below 15.0 from **Spring 2027** (`ITMS-90068`). Drops iOS 13/14 devices, so it is a deliberate call; revisit ~Nov 2026.
 - [ ] Wire environment-based config (replace hardcoded Supabase/OneSignal constants)
 - [ ] Apple HealthKit / Google Fit integration

@@ -16,7 +16,8 @@ This monorepo contains two products that share a single Supabase backend:
 |---|---|---|
 | **Supabase** | PostgreSQL database + user auth | anon key (client), service role key (server) |
 | **OneSignal** | Push notifications to the mobile app | REST API key (Edge Function only) |
-| **Stripe** | Tiered payment — $10 individual / $500 corporate | Secret key (server-side only) |
+| **Stripe** | Web subscription — $19.99 every 3 months, auto-renewing | Secret key (server-side only) |
+| **Apple In-App Purchase** | iOS subscription — same price and term, sold through the App Store | In-App Purchase `.p8` key (Edge Functions only) |
 | **Resend** | Transactional email (sign-up alerts, corporate inquiries) | API key (server-side only) |
 | **Vercel** | Hosts the Next.js website | — |
 | **Sentry** | Website error monitoring (server + edge + browser) | DSN (env-gated; `@sentry/nextjs`) |
@@ -42,9 +43,12 @@ One row per user. Created automatically via trigger when a user signs up.
 | `time_zone` | text | IANA tz identifier (e.g. `America/Los_Angeles`). Preferred over `utc_offset_minutes` for DST-aware scheduling. |
 | `loop_enabled` | boolean default true | Whether the indefinite 21-day reminder loop continues past the first cycle. False = reminders paused. |
 | `email` | text | Stored at payment time |
-| `is_paid` | boolean | Set to true by Stripe webhook |
-| `stripe_session_id` | text | Stripe checkout session ID |
-| `paid_at` | timestamptz | Timestamp of successful payment. **Source of truth for the program week** — see `deriveWeek` in `src/utils/weekProgression.ts`. |
+| `is_paid` | boolean | "Has ever paid." **Not** an entitlement check — it stays true after a subscription lapses. Kept for reporting and as a cheap pre-filter. |
+| `access_expires_at` | timestamptz | **Source of truth for access.** A user may enter the app while `access_expires_at > now()`. Null means no access. |
+| `subscription_provider` | text | `stripe` or `apple` — which side owns the renewal, and therefore which webhook maintains the expiry. |
+| `subscription_id` | text | Stripe subscription id, or Apple's `originalTransactionId`. The only link from an inbound renewal event back to a user, since neither carries an email. Indexed. |
+| `stripe_session_id` | text | Stripe checkout session ID. Also the idempotency key for `checkout.session.completed`. |
+| `paid_at` | timestamptz | Timestamp of the **first** payment. **Source of truth for the program week** — see `deriveWeek` in `src/utils/weekProgression.ts`. Never rewritten on renewal or restore: doing so would snap an established user back to Week 1. |
 
 Row-Level Security is enabled — users can only read/write their own row. The Edge Function bypasses RLS using the service role key.
 
@@ -60,8 +64,13 @@ supabase/migrations/001_add_schedule_fields.sql   ← also DROPs legacy meditati
 supabase/migrations/002_add_payment_fields.sql
 supabase/migrations/003_add_loop_enabled.sql
 supabase/migrations/004_add_time_zone.sql
+supabase/migrations/005_add_subscription_access.sql  ← access_expires_at + subscription fields
 website/supabase/migrations.sql          ← defines corporate_inquiries (website contact form)
 ```
+
+**Migration 005 backfills existing paid users to an expiry of 2099-12-31.** They bought
+lifetime access under the previous model and must keep it. This also covers the App Review
+test account — expiring it would put the reviewer behind the paywall.
 
 ---
 
@@ -86,6 +95,89 @@ ONESIGNAL_REST_API_KEY
 SUPABASE_URL            (auto-injected)
 SUPABASE_SERVICE_ROLE_KEY
 ```
+
+Step 1 also filters on `access_expires_at > now()`. Without it, a cancelled subscriber
+would keep receiving reminders for as long as the loop ran.
+
+---
+
+## Supabase Edge Functions — Apple In-App Purchase
+
+Two functions plus a shared client, all in [supabase/functions/](supabase/functions/). Between
+them they are the only writers of `access_expires_at` for Apple subscribers.
+
+### `_shared/appstore.ts`
+
+Signs an ES256 JWT with the In-App Purchase key and calls the **App Store Server API**
+(`GET /inApps/v1/subscriptions/{transactionId}`). Tries production, falls back to sandbox
+on a 404 — Apple runs the two environments with no cross-visibility, and TestFlight and
+App Review both transact in sandbox, so the fallback is what makes review work against the
+deployed function without a config flag.
+
+`accessExpiryFor()` turns Apple's status into an expiry. Billing-retry and grace-period
+both **keep** access (Apple is still trying to collect; cutting off a customer over one
+declined card is worse than the few days it saves). A revocation always wins over an active
+status and a future expiry — otherwise every refund becomes a free subscription. Unknown
+statuses fail closed. Pinned by [`__tests__/services/appleAccess.test.ts`](__tests__/services/appleAccess.test.ts).
+
+### `verify-apple-purchase`
+
+Called by the app after a purchase or a Restore. Takes `{transactionId}`, asks Apple, writes
+`access_expires_at`.
+
+- The **user id comes from the verified JWT**, never the request body — otherwise anyone could
+  credit anyone else's account with their own transaction.
+- Rejects a transaction already bound to a *different* account (409). One Apple subscription
+  unlocks one account; without this, a single purchase could be replayed via Restore across
+  unlimited accounts by signing in and out.
+- Returns 5xx rather than a rejection when Apple or the database is unreachable, so the client
+  leaves the StoreKit transaction **unfinished** and retries on the next launch. Finishing an
+  unverified transaction would silently discard a purchase the user paid for.
+
+### `apple-notifications`
+
+App Store Server Notifications V2 — Apple's renewal/cancellation/refund webhook, the
+counterpart to the Stripe webhook. Without it an iOS subscriber renews and the app locks them
+out anyway.
+
+**Trust model:** the endpoint is public and unauthenticated (Apple has no credential of ours
+to present), so the notification body is never treated as fact. The only thing taken from it is
+an `originalTransactionId`, which is then used to ask Apple directly. A forged POST therefore
+achieves nothing — either Apple does not recognise the id, or Apple tells us the truth. This is
+why there is no JWS certificate-chain verification: chain validation would prove Apple sent the
+payload, whereas asking Apple proves what is *actually true now*, and cannot be defeated by a
+bug in hand-rolled X.509 parsing.
+
+Deploy with **`--no-verify-jwt`**, or Supabase rejects Apple's requests before they arrive:
+
+```
+supabase functions deploy apple-notifications --no-verify-jwt
+supabase functions deploy verify-apple-purchase
+```
+
+**Required secrets:**
+
+```
+APPLE_IAP_KEY_ID          App Store Connect → Users and Access → Integrations → In-App Purchase
+APPLE_IAP_ISSUER_ID       same page
+APPLE_IAP_PRIVATE_KEY     full .p8 contents, BEGIN/END lines included
+APPLE_BUNDLE_ID           com.executivemeditator.app
+```
+
+> The In-App Purchase key is **not** the App Store Connect API key used to upload builds. It is
+> generated separately and the upload key will not authenticate here.
+
+**App Store Connect setup** (console-only, cannot be scripted):
+1. Subscriptions → create a group → create a subscription: product ID
+   `com.executivemeditator.access.3month`, duration **3 months**, price **$19.99**. The product
+   ID must match `IOS_SUBSCRIPTION_SKU` in [src/services/iap/index.ts](src/services/iap/index.ts)
+   exactly — a mismatch does not error, `getSubscriptions` just returns nothing and the paywall
+   shows the fallback price.
+2. Add localization (display name + description) and a review screenshot. Apple rejects
+   subscriptions without one.
+3. App Information → App Store Server Notifications → set **both** the Production and Sandbox
+   URLs to the deployed `apple-notifications` function. An unset sandbox URL means the entire
+   renewal path goes untested until real customers hit it.
 
 ---
 
@@ -127,7 +219,16 @@ A foreground heartbeat (`startScheduler` in `src/services/scheduler.ts`) is defi
 
 ### Payment gating (paywall)
 
-Access is gated on `profiles.is_paid`. `AppNavigator` routes an authenticated-but-unpaid user to `PaywallScreen`. Purchases happen **only on the website** (Stripe) — the app never processes payment. Per Google Play's Payments policy, the in-app paywall follows the **"reader app" pattern**: it shows no price and does **not** link out to the web checkout; it only states that access is required and offers a support contact. See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
+Access is gated on **`profiles.access_expires_at > now()`**, evaluated by `hasActiveAccess()` in [src/services/supabase/database.ts](src/services/supabase/database.ts). It is *not* gated on `is_paid`, which since the move to subscriptions only means "has ever paid" and stays true for cancelled users. `AppNavigator` routes anyone without active access to `PaywallScreen`.
+
+`AppNavigator` caches the **expiry timestamp**, not a boolean (`accessExpiresAt:<uid>` in AsyncStorage). A cached "yes" would readmit a lapsed subscriber on every cold start, and indefinitely while offline; caching the timestamp lets the same expiry check run locally, so access ends on time without a network call.
+
+**The paywall is two different screens.** See [src/screens/PaywallScreen.tsx](src/screens/PaywallScreen.tsx).
+
+- **iOS sells.** Apple's Guideline 3.1.1 requires that content unlocked in-app be purchasable via In-App Purchase; selling only on the website is why build 1 was rejected. The screen carries everything Guideline 3.1.2 requires — title, duration, price (read from StoreKit, *not* hardcoded, since Apple sets a different local price per storefront), the auto-renewal disclosure, Restore Purchases, and links to Terms and Privacy.
+- **Android does not sell.** Play Billing is not implemented, and Play's Payments policy forbids linking out to an external purchase, so Android keeps the neutral "access required + contact support" message. Everything in `src/services/iap` no-ops when `Platform.OS !== 'ios'`.
+
+**The client never decides entitlement.** A purchase ends with the transaction id being sent to the `verify-apple-purchase` Edge Function, which asks Apple and writes `access_expires_at`. A patched binary can fake a StoreKit response; it cannot fake Apple's answer to our server.
 
 ### Crash reporting
 
@@ -202,16 +303,18 @@ Two transactional route groups are `noindex`, each via a layout:
 ### API routes
 
 #### `POST /api/stripe/checkout`
-Creates a Stripe Checkout session. Accepts a `tier` param — `individual` ($10, unit_amount 1000, the default) or `corporate` ($500, unit_amount 50000).
+Creates a Stripe Checkout session in **`mode: 'subscription'`** — $19.99 (`unit_amount: 1999`) recurring on `interval: 'month'` with `interval_count: 3`. There is only one price; the corporate tier was removed 2026-08-29, and a `tier` param in the body is ignored entirely so no stale client can select a price we no longer offer.
+- The 3-month interval matches the App Store subscription period. Apple offers only 1 week / 1 / 2 / 3 / 6 months / 1 year, so the intended "three 21-day cycles" (63 days) has no exact match: 2 months would cut users off mid-cycle, 3 months covers four full cycles. Stripe has no `quarter`, hence `month × 3`.
+- `supabase_user_id` is written to **both** `metadata` and `subscription_data.metadata`. Checkout metadata does not propagate to the subscription, and renewals arrive against the subscription with no session and no email — without the second copy, a renewal three months later cannot be attributed to anyone.
 - Reads `STRIPE_SECRET_KEY`. If not set, returns `{ url: '/setup' }` (graceful no-op for dev).
-- On success, returns `{ url: <stripe_checkout_url> }`. The client redirects to it. The `/setup/confirmed` client checks `res.ok` + the presence of `url` before redirecting, so a failed checkout surfaces an error instead of a false success.
-- Stripe sends a webhook to `/api/stripe/webhook` on payment completion, which sets `profiles.is_paid = true`.
 
 #### `POST /api/stripe/webhook`
-Verifies the Stripe signature, then on `checkout.session.completed`:
-- Locates the profile by `supabase_user_id` (checkout metadata), **falling back to `customer_email`** if the id is missing.
-- **Idempotent:** if the profile is already paid or this `session.id` was already recorded, it acks `200` without re-writing `paid_at` (which would rewind the user's 21-day program) or re-sending the welcome email — Stripe delivers at-least-once and retries.
-- If no profile can be matched, returns a **non-200** so Stripe retries and the failure is surfaced (never silently drops a paid customer). A welcome-email failure does not fail the webhook (payment is already recorded).
+Verifies the Stripe signature, then handles three events:
+- **`checkout.session.completed`** — records `access_expires_at` from the subscription's period end, plus `subscription_provider` and `subscription_id`. Sets `paid_at` **only if absent**, so a returning customer is not reset to Week 1. Idempotency is keyed on `stripe_session_id` alone; the old `is_paid` check would reject every resubscription, since `is_paid` stays true forever once someone has paid.
+- **`invoice.payment_succeeded`** — extends access on renewal, matched by `subscription_id` (the only link back to the user). Returns **500** if nothing matches: someone being charged while their access lapses must surface, not be acked. Also fires for the first charge, which is harmless — it computes the same expiry, so the two handlers are idempotent with each other in any order.
+- **`customer.subscription.deleted`** — expires access and clears `subscription_id`. Stripe deletes at period end rather than at cancellation, so the user has already had what they paid for.
+
+If no profile can be matched on the initial purchase, returns a **non-200** so Stripe retries and the failure is surfaced (never silently drops a paid customer). A welcome-email failure does not fail the webhook (payment is already recorded).
 
 #### `POST /api/notify-signup`
 Called by the `/setup` page immediately after a user submits the sign-up form (before email verification). Sends an internal alert email via Resend so you know someone new signed up. Gracefully no-ops if `RESEND_API_KEY` is not configured.
@@ -260,7 +363,7 @@ The website client uses Supabase's **implicit** flow type (configured in `websit
 | `NEXT_PUBLIC_SUPABASE_URL` | Client + server | Supabase → Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + server | Supabase → Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only | Supabase → Settings → API |
-| `STRIPE_SECRET_KEY` | `/api/stripe/checkout` | Stripe Dashboard → Developers → API keys |
+| `STRIPE_SECRET_KEY` | `/api/stripe/checkout`, `/api/stripe/webhook` | Stripe Dashboard → Developers → API keys |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Reserved — not currently read by any code | Stripe Dashboard → Developers → API keys |
 | `STRIPE_WEBHOOK_SECRET` | `/api/stripe/webhook` | Stripe Dashboard → Webhooks → signing secret |
 | `RESEND_API_KEY` | `/api/notify-signup`, `/api/contact` | Resend Dashboard → API Keys |
