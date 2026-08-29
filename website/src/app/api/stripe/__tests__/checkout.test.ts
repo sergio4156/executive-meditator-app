@@ -57,7 +57,7 @@ describe('POST /api/stripe/checkout', () => {
     await POST(makeRequest({ email: 'user@example.com', userId: 'uuid-123' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: { supabase_user_id: 'uuid-123', tier: 'individual' },
+        metadata: { supabase_user_id: 'uuid-123' },
       })
     );
   });
@@ -66,7 +66,7 @@ describe('POST /api/stripe/checkout', () => {
     await POST(makeRequest({ email: 'user@example.com' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: { supabase_user_id: '', tier: 'individual' },
+        metadata: { supabase_user_id: '' },
       })
     );
   });
@@ -89,26 +89,38 @@ describe('POST /api/stripe/checkout', () => {
     );
   });
 
-  it('charges $500 (50000 cents) when tier is corporate', async () => {
+  it('IGNORES a corporate tier request and still charges $10', async () => {
+    // The corporate tier was removed 2026-08-29 (Apple Guideline 3.1.3(c)).
+    // A stale client or a hand-crafted request must not be able to select a
+    // price we no longer offer — the route ignores `tier` entirely rather than
+    // mapping unknown values, so there is no path back to $500.
     await POST(makeRequest({ email: 'user@example.com', tier: 'corporate' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: expect.arrayContaining([
           expect.objectContaining({
             price_data: expect.objectContaining({
-              unit_amount: 50000,
+              unit_amount: 1000,
               product_data: expect.objectContaining({
-                name: 'The Executive Meditator — Corporate (up to 500 employees)',
+                name: 'The Executive Meditator — Individual',
               }),
             }),
           }),
         ]),
-        metadata: expect.objectContaining({ tier: 'corporate' }),
       })
     );
   });
 
-  it('treats unknown tier values as individual', async () => {
+  it('no longer records a tier in Stripe metadata', async () => {
+    await POST(makeRequest({ email: 'user@example.com', userId: 'uuid-abc' }));
+    const call = mockStripe.create.mock.calls[0][0];
+    expect(call.metadata).toEqual({ supabase_user_id: 'uuid-abc' });
+    expect(call.metadata.tier).toBeUndefined();
+  });
+
+  it('ignores any tier value in the request body', async () => {
+    // There is only one price now, so `tier` is not read at all. Previously
+    // unknown values fell back to individual; today nothing can select a price.
     await POST(makeRequest({ email: 'user@example.com', tier: 'enterprise-unicorn' }));
     expect(mockStripe.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -117,7 +129,6 @@ describe('POST /api/stripe/checkout', () => {
             price_data: expect.objectContaining({ unit_amount: 1000 }),
           }),
         ]),
-        metadata: expect.objectContaining({ tier: 'individual' }),
       })
     );
   });
