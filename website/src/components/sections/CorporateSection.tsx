@@ -174,8 +174,7 @@ export default function CorporateSection() {
           <p className="font-sans text-sm text-cream-200 opacity-70 leading-relaxed mb-12 max-w-md">
             What once took monks, nuns, lamas, and priests a lifetime of
             rigorous practice is now accessible to your organization through a
-            simple 10-second daily practice. Less than $1 per employee.
-            Lifetime access.
+            simple 10-second daily practice. Lifetime access.
           </p>
 
           {/* The 3 P's */}

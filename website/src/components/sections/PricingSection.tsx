@@ -15,8 +15,21 @@ const fadeUp = {
 
 type Variant = 'cream' | 'navy';
 
+/**
+ * Individual pricing only.
+ *
+ * The "$500 · Corporate · Up to 500 employees" card was removed 2026-08-29.
+ * Apple cited Guideline 3.1.3(c) (Enterprise Services) on the iOS submission
+ * because the same service appeared to be sold both to organizations and to
+ * individuals. Advertising an organizational price is what made it read as a
+ * product rather than a conversation.
+ *
+ * Companies are still served: CorporateSection below keeps its inquiry form,
+ * and the "For Companies" links in the nav and footer still point to it. What
+ * is gone is the advertised price.
+ */
 interface Tier {
-  id: 'individual' | 'corporate';
+  id: 'individual';
   role: string;
   subtitle: string;
   price: string;
@@ -43,20 +56,6 @@ const tiers: Tier[] = [
     featured: false,
     badge: null,
     variant: 'cream',
-  },
-  {
-    id: 'corporate',
-    role: 'Corporate',
-    subtitle: 'Up to 500 employees',
-    price: '$500',
-    pricingNote: 'One-time, organization-wide.',
-    description:
-      'A 21-day transformation for your entire team. Less than $1 per employee. Returns: Peace, Productivity, Profits — what once took monks a lifetime, now in 21 days.',
-    cta: 'Get in Touch',
-    ctaHref: '#corporate',
-    featured: true,
-    badge: 'Best Value',
-    variant: 'navy',
   },
 ];
 
@@ -203,7 +202,13 @@ export default function PricingSection() {
         </motion.p>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {/*
+          Single column since the corporate tier was removed. Was
+          md:grid-cols-2 max-w-4xl for two cards; one card in that grid sits
+          left-aligned against a half-empty row. max-w-md keeps the card at
+          roughly its original rendered width rather than stretching it.
+        */}
+        <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
           {tiers.map((tier, i) => (
             <PricingCard
               key={tier.id}
