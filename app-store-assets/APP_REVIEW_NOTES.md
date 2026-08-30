@@ -79,7 +79,7 @@ email they cannot receive.
 >    This account already has access, so it opens directly into the program. Use it to evaluate the
 >    app's functionality: the 21-day program, the reminder schedule, and settings.
 >
-> 2. **To review the in-app purchase — `[SECOND ACCOUNT EMAIL]`**
+> 2. **To review the in-app purchase — `sergio4156+iapreview@gmail.com`**
 >    This account has no access, so it opens directly onto the subscription screen. Use it to
 >    evaluate the purchase flow. Signing in with this account is the fastest route to the in-app
 >    purchase; account 1 will not display it, because it is already subscribed.
