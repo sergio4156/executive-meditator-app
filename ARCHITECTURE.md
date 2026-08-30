@@ -109,10 +109,32 @@ them they are the only writers of `access_expires_at` for Apple subscribers.
 ### `_shared/appstore.ts`
 
 Signs an ES256 JWT with the In-App Purchase key and calls the **App Store Server API**
-(`GET /inApps/v1/subscriptions/{transactionId}`). Tries production, falls back to sandbox
-on a 404 — Apple runs the two environments with no cross-visibility, and TestFlight and
-App Review both transact in sandbox, so the fallback is what makes review work against the
-deployed function without a config flag.
+(`GET /inApps/v1/subscriptions/{transactionId}`). Tries production, falls back to sandbox —
+Apple runs the two environments with no cross-visibility, and TestFlight and App Review both
+transact in sandbox, so the fallback is what makes review work against the deployed function
+without a config flag.
+
+> ### ⚠️ Production returns **401**, not 404, for an unreleased app
+> Measured against Apple on 2026-08-29 with a fake transaction id and a valid key, in the same
+> second:
+>
+> ```
+> production -> HTTP 401, empty body
+> sandbox    -> HTTP 404 {"errorCode":4040010,"errorMessage":"Transaction id not found."}
+> ```
+>
+> The credentials were fine. Apple's production endpoint rejects apps that have no production
+> presence yet, which is every app before its first release.
+>
+> **So the sandbox fallback must trigger on 401 as well as 404.** Treating a production 401 as
+> fatal breaks the single most important case: an App Review purchase happens in sandbox, so
+> verification would fail and the build would be rejected for the very feature it was submitted
+> to add. Only a 401 from **both** environments means the credentials are actually wrong.
+>
+> Verify the whole chain without a device by POSTing a fabricated notification to the deployed
+> webhook — a made-up `originalTransactionId` inside an unsigned JWS is enough, because the
+> function ignores the payload and asks Apple. `{"status":"unrecognised"}` with HTTP 200 means
+> signing, key, issuer, bundle id, and fallback all work. HTTP 500 means they do not.
 
 `accessExpiryFor()` turns Apple's status into an expiry. Billing-retry and grace-period
 both **keep** access (Apple is still trying to collect; cutting off a customer over one

@@ -221,11 +221,36 @@ async function fetchStatus(
 }
 
 /**
+ * Apple rejected our credentials, or failed on its own side.
+ *
+ * Distinct from "transaction not found" because the remedy is the opposite. A
+ * missing transaction means the CALLER supplied something invalid and must be
+ * refused. This means WE are broken — an expired or wrong .p8, a mismatched key
+ * or issuer id, a bad bundle id, or an Apple outage — and refusing the caller
+ * would be blaming a paying customer for our own misconfiguration.
+ *
+ * Callers should surface this as a 5xx so the client retries and leaves the
+ * StoreKit transaction unfinished, rather than telling the user their purchase
+ * was invalid.
+ */
+export class AppStoreAuthError extends Error {
+  constructor(public readonly status: number, body: string) {
+    super(`App Store Server API returned ${status}: ${body.slice(0, 200)}`);
+    this.name = 'AppStoreAuthError';
+  }
+}
+
+/**
  * Ask Apple for the current state of a subscription.
  *
- * Returns null when Apple does not recognise the transaction — an invalid id,
- * a transaction belonging to another app, or a fabricated one. Callers must
- * treat null as "grant nothing".
+ * Returns null ONLY when Apple genuinely does not recognise the transaction —
+ * an invalid id, a transaction belonging to another app, or a fabricated one.
+ * Callers must treat null as "grant nothing".
+ *
+ * Throws AppStoreAuthError when Apple rejects our credentials or fails. Those
+ * must never be collapsed into null: doing so would report a broken signing key
+ * as "your transaction is not recognised", sending every debugging effort after
+ * the customer's purchase instead of our own configuration.
  *
  * PRODUCTION IS TRIED FIRST, THEN SANDBOX. Apple runs two separate
  * environments with no cross-visibility: a sandbox transaction 404s against
@@ -242,12 +267,49 @@ export async function getSubscriptionStatus(
   let response = await fetchStatus(PRODUCTION_BASE, transactionId, token);
   let environment: 'Production' | 'Sandbox' = 'Production';
 
-  if (response.status === 404) {
+  /*
+   * FALL BACK TO SANDBOX ON 401 AS WELL AS 404.
+   *
+   * Verified against Apple 2026-08-29 with a deliberately fake transaction id:
+   *   production -> HTTP 401, empty body
+   *   sandbox    -> HTTP 404, {"errorCode":4040010,"errorMessage":"Transaction id not found."}
+   * using the same key, in the same second. The credentials are fine; Apple's
+   * PRODUCTION endpoint returns 401 for an app that has no production presence
+   * yet — which is exactly the state of any app that has not been released.
+   *
+   * Treating a production 401 as fatal would therefore break the one case that
+   * matters most: App Review and TestFlight both transact in SANDBOX. A
+   * reviewer's purchase would fail verification and the build would be rejected
+   * for the very feature it was submitted to add.
+   *
+   * So a 401 here is not evidence of bad credentials — only a 401 from BOTH
+   * environments is, and that is checked below.
+   */
+  const productionRejected =
+    response.status === 404 ||
+    response.status === 401 ||
+    response.status === 403;
+
+  if (productionRejected) {
     response = await fetchStatus(SANDBOX_BASE, transactionId, token);
     environment = 'Sandbox';
+
+    // Refused by both environments: now it really is our credentials.
+    if (response.status === 401 || response.status === 403) {
+      throw new AppStoreAuthError(response.status, await response.text());
+    }
   }
 
-  if (!response.ok) return null;
+  // A genuine "not found". This is the only case where the caller's
+  // transaction is actually at fault.
+  if (response.status === 404) return null;
+
+  // Anything else — 429 rate limiting, 5xx, an unexpected status — is Apple's
+  // problem or ours, not the caller's. Throwing turns it into a retryable 5xx
+  // instead of a false "your purchase is invalid".
+  if (!response.ok) {
+    throw new AppStoreAuthError(response.status, await response.text());
+  }
 
   const body = (await response.json()) as StatusResponse;
 

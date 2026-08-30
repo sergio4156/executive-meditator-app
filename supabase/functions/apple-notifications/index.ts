@@ -36,6 +36,7 @@ import {serve} from 'https://deno.land/std@0.168.0/http/server.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 
 import {
+  AppStoreAuthError,
   BUNDLE_ID,
   accessExpiryFor,
   decodeJwsPayload,
@@ -114,7 +115,15 @@ serve(async req => {
   } catch (err) {
     // 500 makes Apple retry — the notification is worth keeping. Apple retries
     // on a backoff for up to three days, which comfortably covers an outage.
-    console.error('App Store Server API error:', err);
+    if (err instanceof AppStoreAuthError) {
+      console.error(
+        `APPLE CREDENTIALS REJECTED (${err.status}). Every renewal and ` +
+          `cancellation is being dropped until this is fixed. Check the four ` +
+          `APPLE_* secrets. ${err.message}`,
+      );
+    } else {
+      console.error('App Store Server API error:', err);
+    }
     return json({error: 'Upstream error'}, 500);
   }
 

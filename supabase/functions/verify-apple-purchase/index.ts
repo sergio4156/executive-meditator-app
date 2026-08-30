@@ -19,6 +19,7 @@ import {serve} from 'https://deno.land/std@0.168.0/http/server.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 
 import {
+  AppStoreAuthError,
   accessExpiryFor,
   getSubscriptionStatus,
 } from '../_shared/appstore.ts';
@@ -86,6 +87,18 @@ serve(async req => {
     // A failure to reach Apple is OUR problem, not a rejection of the user's
     // purchase. 502 so the client can retry rather than reporting the purchase
     // invalid — StoreKit will redeliver the unfinished transaction.
+    if (err instanceof AppStoreAuthError) {
+      // Logged separately and unmistakably. This is a misconfiguration on our
+      // side — wrong .p8, wrong key id, wrong issuer id, wrong bundle id, or a
+      // revoked key — and it fails for EVERY customer, not just this one. It
+      // must not read like an ordinary upstream hiccup in the logs.
+      console.error(
+        `APPLE CREDENTIALS REJECTED (${err.status}). Every purchase will fail ` +
+          `until this is fixed. Check APPLE_IAP_KEY_ID / APPLE_IAP_ISSUER_ID / ` +
+          `APPLE_IAP_PRIVATE_KEY / APPLE_BUNDLE_ID. ${err.message}`,
+      );
+      return json({error: 'Purchase verification is temporarily unavailable'}, 503);
+    }
     console.error('App Store Server API error:', err);
     return json({error: 'Could not reach the App Store'}, 502);
   }
