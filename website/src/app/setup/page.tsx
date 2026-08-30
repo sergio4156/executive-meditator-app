@@ -306,7 +306,13 @@ export default function SetupPage() {
           </form>
 
           {/* Stripe note */}
-          <p className="mt-6 text-center font-sans text-xs text-cream-200 opacity-50 leading-relaxed">
+          {/*
+            opacity-70, not opacity-50: at 50% this measures 3.91:1 on navy-900,
+            under the 4.5:1 WCAG AA requires. It states the price and the
+            recurring term, so it has to be readable rather than decorative.
+            70% measures 6.18:1.
+          */}
+          <p className="mt-6 text-center font-sans text-xs text-cream-200 opacity-70 leading-relaxed">
             After creating your account, you will be directed to a secure Stripe
             checkout — $19.99 every 3 months, cancel any time.
           </p>

@@ -176,13 +176,15 @@ cd website && npm test        # website suite
 cd website && npm run lint    # website ESLint
 ```
 
-Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; services: analytics, iap, appleAccess). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
+Mobile suites live in `__tests__/` (utils: weekProgression, timezone, meditation; store: meditationSlice; components: AlarmCard; screens: PaywallScreen; services: analytics, iap, appleAccess). Website suites sit in `__tests__/` folders beside the code they cover (`src/lib/`, `src/app/api/**`).
+
+`__tests__/screens/PaywallScreen.test.tsx` asserts every element Guideline 3.1.2 requires is actually rendered, and that Subscribe always produces a visible outcome — the screen shipped with a state where tapping it did nothing at all, which is a documented rejection reason.
 
 `__tests__/services/appleAccess.test.ts` exercises a **Deno** Edge Function module from Jest by shimming `globalThis.Deno` before the require. That module is where entitlement is decided, and every way it can be wrong costs money in one direction or the other, so it is worth testing outside its runtime.
 
 **The two commands overlap — don't add their totals together.** The repo-root `npm test` runs *everything*, because the root Jest config also picks up `website/src/**/__tests__`. The website command runs a subset, useful when you only care about that project.
 
-Counts as of 2026-08-29: **147 tests total** (88 mobile + 59 website) across 13 suites, all passing, with zero type errors and zero lint errors in either project.
+Counts as of 2026-08-29: **166 tests total** (107 mobile + 59 website) across 14 suites, all passing, with zero type errors and zero lint errors in either project.
 
 Both ESLint configs disable a rule or two for stated reasons rather than taste — see the comments in [.eslintrc.js](.eslintrc.js) and [website/.eslintrc.json](website/.eslintrc.json) before re-enabling anything. The handful of remaining warnings are left deliberately as real (if minor) issues, so a non-empty lint run means something.
 

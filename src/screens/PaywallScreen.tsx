@@ -292,7 +292,11 @@ export function PaywallScreen() {
                 disabled={busy}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel={`Subscribe for ${price} every 3 months`}>
+                accessibilityLabel={`Subscribe for ${price} every 3 months`}
+                // Without this the spinner is invisible to VoiceOver: the label
+                // still reads "Subscribe" while the purchase is already in
+                // flight, inviting a second tap on a payment control.
+                accessibilityState={{busy, disabled: busy}}>
                 {busy ? (
                   <ActivityIndicator color={theme.colors.background} />
                 ) : (

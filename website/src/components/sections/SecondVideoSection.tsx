@@ -185,7 +185,15 @@ export default function SecondVideoSection() {
             Get Started
           </Link>
 
-          <p className="mt-5 font-sans text-xs text-text-muted opacity-50">
+          {/*
+            opacity-90, not opacity-50. At 50% this line sits at 2.27:1 against
+            cream-100 — well under the 4.5:1 WCAG AA needs for 12px text. It was
+            a harmless flourish when it read "Secured by Stripe"; it now carries
+            the price and the cancellation terms, which is precisely the
+            information an auto-renewal disclosure exists to make legible.
+            90% measures 5.41:1.
+          */}
+          <p className="mt-5 font-sans text-xs text-text-muted opacity-90">
             $19.99 every 3 months &middot; Cancel any time &middot; Secured by Stripe
           </p>
         </motion.div>
