@@ -19,7 +19,7 @@
  * The purchase itself is handled by src/services/iap — this screen only drives
  * it and reflects the result. Entitlement is decided by the server.
  */
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -60,6 +60,12 @@ const PRIVACY_URL = 'https://www.theexecutivemeditator.com/privacy';
 /** Apple's deep link to the user's own subscription management screen. */
 const MANAGE_SUBSCRIPTIONS_URL =
   'https://apps.apple.com/account/subscriptions';
+/**
+ * How long to leave the Subscribe spinner up before assuming StoreKit will
+ * never answer. Long enough to cover the App Store sheet plus Face ID and a
+ * password prompt; short enough that a wedged request does not look permanent.
+ */
+const PURCHASE_TIMEOUT_MS = 90_000;
 
 export function PaywallScreen() {
   const dispatch = useAppDispatch();
@@ -68,6 +74,19 @@ export function PaywallScreen() {
   const [offer, setOffer] = useState<SubscriptionOffer | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // Backstop for a StoreKit request that never reports an outcome. Generous
+  // on purpose: the App Store sheet, Face ID, and a password prompt can take a
+  // while, and firing early would tell a user their purchase failed while it
+  // is still in progress.
+  const busyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearBusyWatchdog = useCallback(() => {
+    if (busyTimeoutRef.current) {
+      clearTimeout(busyTimeoutRef.current);
+      busyTimeoutRef.current = null;
+    }
+  }, []);
+  useEffect(() => clearBusyWatchdog, [clearBusyWatchdog]);
 
   /**
    * Adopt a confirmed expiry.
@@ -123,32 +142,77 @@ export function PaywallScreen() {
   // listener, not the purchase call, is what grants access.
   useEffect(() => {
     if (!IAP_AVAILABLE) {return;}
+    // Every branch cancels the watchdog first: a real outcome has arrived, so
+    // the timeout must not fire later and overwrite it with "the App Store did
+    // not respond" after the purchase has already succeeded.
     return listenForPurchases({
       onGranted: expiry => {
+        clearBusyWatchdog();
         setBusy(false);
         setMessage(null);
         void grantAccess(expiry);
       },
       onVerificationFailed: () => {
+        clearBusyWatchdog();
         setBusy(false);
         setMessage(
           'Your purchase went through, but we could not confirm it yet. It will be applied automatically — reopen the app in a few minutes, or contact support.',
         );
       },
       onError: (text, cancelledByUser) => {
+        clearBusyWatchdog();
         setBusy(false);
         setMessage(cancelledByUser ? null : text);
       },
     });
-  }, [grantAccess]);
+  }, [clearBusyWatchdog, grantAccess]);
 
   const onSubscribe = useCallback(async () => {
     setMessage(null);
+
+    // If StoreKit never returned the product, there is nothing to buy and
+    // requestSubscription does nothing visible — a Subscribe button that
+    // silently fails is a documented rejection reason, and the same state
+    // occurs for any user who was offline when the paywall first loaded.
+    // Retry the fetch once before giving up, since the earlier attempt may
+    // simply have raced a cold network.
+    let product = offer;
+    if (!product) {
+      setBusy(true);
+      await initIap();
+      product = await fetchSubscription();
+      if (product) {
+        setOffer(product);
+      }
+    }
+
+    if (!product) {
+      setBusy(false);
+      setMessage(
+        'The subscription is not available right now. Check your connection and try again, or contact support below.',
+      );
+      return;
+    }
+
     setBusy(true);
+    // Watchdog. `busy` is deliberately left set after a successful call
+    // because the outcome arrives on the listener, which means a StoreKit
+    // request that neither resolves nor reports an error would spin forever.
+    // This only clears the spinner — it cancels nothing, so a purchase that
+    // completes later still grants access through onGranted.
+    clearBusyWatchdog();
+    busyTimeoutRef.current = setTimeout(() => {
+      setBusy(false);
+      setMessage(
+        'The App Store did not respond. If you were not charged, try again; if you were, your access will be applied automatically.',
+      );
+    }, PURCHASE_TIMEOUT_MS);
+
     try {
       await purchaseSubscription();
       // Intentionally leaves `busy` set: the outcome arrives on the listener.
     } catch (err) {
+      clearBusyWatchdog();
       setBusy(false);
       setMessage(
         err instanceof Error
@@ -156,10 +220,13 @@ export function PaywallScreen() {
           : 'The purchase could not be started.',
       );
     }
-  }, []);
+  }, [clearBusyWatchdog, offer]);
 
   const onRestore = useCallback(async () => {
     setMessage(null);
+    // A watchdog left over from an abandoned Subscribe tap would otherwise
+    // fire mid-restore and report an App Store failure that did not happen.
+    clearBusyWatchdog();
     setBusy(true);
     try {
       const expiry = await restorePurchases();
@@ -180,7 +247,7 @@ export function PaywallScreen() {
       setBusy(false);
       setMessage('We could not reach the App Store. Please try again.');
     }
-  }, [grantAccess]);
+  }, [clearBusyWatchdog, grantAccess]);
 
   const price = offer?.localizedPrice ?? FALLBACK_PRICE;
 
