@@ -155,6 +155,17 @@ supabase functions deploy apple-notifications --no-verify-jwt
 supabase functions deploy verify-apple-purchase
 ```
 
+**Deployed 2026-08-29.** Confirm the flag stuck with `supabase functions list` — the
+`apple-notifications` entry must show `"verify_jwt": false`. If a later redeploy omits the flag it
+silently reverts to `true`, and every Apple notification is rejected before reaching the code, with
+no error anywhere in the function logs.
+
+Webhook URL to register in App Store Connect (both environments):
+
+```
+https://xhqmzryqwnbcdmwvfyev.supabase.co/functions/v1/apple-notifications
+```
+
 **Required secrets:**
 
 ```
